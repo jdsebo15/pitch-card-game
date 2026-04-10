@@ -123,16 +123,17 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
   };
 
   if (card.suit === 'joker') {
-    return card.rank === 'big' ? 115 : 113;
+    return card.rank === 'big' ? 120 : 119; // Big Joker highest, Little Joker second
   }
 
-  if (isOffJack(card, trumpSuit)) return 114;
-
   if (trumpSuit && card.suit === trumpSuit) {
-    if (card.rank === 'J') return 116;
-    if (card.rank === 'A') return 112;
-    if (card.rank === 'K') return 111;
-    if (card.rank === 'Q') return 110;
+    if (card.rank === 'J') return 118; // Right Bower (trump jack)
+    if (card.rank === 'A') return 116;
+    if (card.rank === 'K') return 115;
+    if (card.rank === 'Q') return 114;
+  }
+
+  if (isOffJack(card, trumpSuit)) return 117; // Left Bower (off-jack)
     return 100 + baseRankValues[card.rank];
   }
 
