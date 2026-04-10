@@ -439,17 +439,17 @@ const overlayStyles = StyleSheet.create({
 const biddingStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: '30%', // Center vertically
-    left: '10%',
-    right: '10%',
+    top: '50%', // Center vertically
+    left: '50%', // Center horizontally
+    transform: [{ translateX: -150 }, { translateY: -100 }], // Center based on size
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#3b82f6',
-    maxWidth: 300,
-    alignSelf: 'center',
+    width: 300,
+    height: 200,
   },
   title: {
     color: '#fff',
