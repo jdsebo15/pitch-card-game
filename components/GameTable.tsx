@@ -62,32 +62,32 @@ function PlayerBadge({
   );
 }
 
-/** Fanned card backs for North/top — horizontal fan */
-function HorizontalFanBack({ count }: { count: number }) {
-  const show = Math.min(count, 9);
+/** Fanned face‑up cards for North/top — horizontal fan */
+function HorizontalFanFaceUp({ cards }: { cards: GameCard[] }) {
+  const show = Math.min(cards.length, 9);
   const overlap = 18;
   const totalW = CARD_W + (show - 1) * (CARD_W - overlap);
   return (
     <View style={{ width: totalW, height: CARD_H, position: 'relative' }}>
-      {Array.from({ length: show }).map((_, i) => (
+      {cards.slice(0, show).map((card, i) => (
         <View key={i} style={{ position: 'absolute', left: i * (CARD_W - overlap) }}>
-          <Card suit="spades" rank="A" faceUp={false} width={CARD_W} height={CARD_H} />
+          <Card suit={card.suit} rank={card.rank} faceUp={true} width={CARD_W} height={CARD_H} />
         </View>
       ))}
     </View>
   );
 }
 
-/** Fanned card backs for West/left — vertical fan */
-function VerticalFanBack({ count }: { count: number }) {
-  const show = Math.min(count, 8);
+/** Fanned face‑up cards for West/left — vertical fan */
+function VerticalFanFaceUp({ cards }: { cards: GameCard[] }) {
+  const show = Math.min(cards.length, 8);
   const overlap = 16;
   const totalH = SIDE_CARD_H + (show - 1) * (SIDE_CARD_H - overlap);
   return (
     <View style={{ width: SIDE_CARD_W, height: totalH, position: 'relative' }}>
-      {Array.from({ length: show }).map((_, i) => (
+      {cards.slice(0, show).map((card, i) => (
         <View key={i} style={{ position: 'absolute', top: i * (SIDE_CARD_H - overlap) }}>
-          <Card suit="spades" rank="A" faceUp={false} width={SIDE_CARD_W} height={SIDE_CARD_H} />
+          <Card suit={card.suit} rank={card.rank} faceUp={true} width={SIDE_CARD_W} height={SIDE_CARD_H} />
         </View>
       ))}
     </View>
@@ -160,7 +160,7 @@ export function GameTable({
           <View style={styles.northArea}>
             <PlayerBadge player={north} />
             <View style={{ marginTop: 8 }}>
-              <HorizontalFanBack count={north.handCount} />
+              <HorizontalFanFaceUp cards={playerHands[north.id] || []} />
             </View>
           </View>
         )}
@@ -168,7 +168,7 @@ export function GameTable({
         {/* ── WEST ── */}
         {west && (
           <View style={styles.westArea}>
-            <VerticalFanBack count={west.handCount} />
+            <VerticalFanFaceUp cards={playerHands[west.id] || []} />
             <PlayerBadge player={west} align="flex-start" />
           </View>
         )}
@@ -176,7 +176,7 @@ export function GameTable({
         {/* ── EAST ── */}
         {east && (
           <View style={styles.eastArea}>
-            <VerticalFanBack count={east.handCount} />
+            <VerticalFanFaceUp cards={playerHands[east.id] || []} />
             <PlayerBadge player={east} align="flex-end" />
           </View>
         )}
