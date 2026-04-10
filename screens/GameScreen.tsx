@@ -229,11 +229,11 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         teamScores={gameState.teamScores}
       />
       
-      {/* Player hand (only in playing phase) */}
-      {gameState.phase === 'playing' && (
+      {/* Player hand (visible in playing AND bidding phases) */}
+      {(gameState.phase === 'playing' || gameState.phase === 'bidding') && (
         <View style={styles.playerHandContainer}>
           <Text style={styles.handTitle}>
-            🟢 {currentPlayer.name}'s turn • {currentPlayer.hand.length} cards
+            {gameState.phase === 'bidding' ? '🃏 Your Hand' : `🟢 ${currentPlayer.name}'s turn • ${currentPlayer.hand.length} cards`}
           </Text>
           
           <View style={styles.handCards}>
@@ -245,6 +245,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
                   selectedCard === card.id && styles.cardSelected,
                 ]}
                 onPress={() => handleCardSelect(card.id)}
+                disabled={gameState.phase === 'bidding'}
               >
                 <Card
                   suit={card.suit}
@@ -256,8 +257,8 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
             ))}
           </View>
           
-          {/* Play button */}
-          {selectedCard && (
+          {/* Play button (only in playing phase) */}
+          {selectedCard && gameState.phase === 'playing' && (
             <TouchableOpacity
               style={styles.playButton}
               onPress={handlePlaySelectedCard}
