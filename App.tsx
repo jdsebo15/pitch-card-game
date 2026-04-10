@@ -45,8 +45,8 @@ export default function App() {
                 3. 🇶 Queen = 0 points{'\n'}
                 4. 🎃 Main Jack (trump) = 1 point{'\n'}
                 5. 🃏 Big Joker = 1 point{'\n'}
-                6. 🃏 Little Joker = 1 point{'\n'}
-                7. 🎭 Off Jack (same color) = 1 point{'\n'}
+                6. 🎭 Off Jack (same color) = 1 point{'\n'}
+                7. 🃏 Little Joker = 1 point{'\n'}
                 8. 🔟 10 = 1 point{'\n'}
                 9. 9, 8, 7, 6, 5, 4 = 0 points{'\n'}
                 10. 3️⃣ 3 = 3 points{'\n'}

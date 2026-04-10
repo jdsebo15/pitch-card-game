@@ -126,9 +126,9 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
   
   // Jokers (always trump in some variations)
   if (card.suit === 'joker') {
-    // Jokers rank between main jack and off jack
-    if (card.rank === 'big') return 41;    // Big joker
-    if (card.rank === 'little') return 40; // Little joker
+    // Jokers rank: big joker > off jack > little joker
+    if (card.rank === 'big') return 41;    // Big joker (after main jack)
+    if (card.rank === 'little') return 39; // Little joker (after off jack)
   }
   
   // Handle off-jack (jack of same color as trump)
@@ -142,8 +142,8 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
     );
     
     if (isSameColor && card.suit !== trumpSuit) {
-      // Off jack ranks between main jack and ace
-      return 35;
+      // Off jack ranks between big joker and little joker
+      return 40;
     }
   }
   

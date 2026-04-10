@@ -149,12 +149,12 @@ export function BiddingScreen({
             <Text style={styles.pointText}>Big Joker = 1 point</Text>
           </View>
           <View style={styles.pointItem}>
-            <Text style={styles.pointEmoji}>🃏</Text>
-            <Text style={styles.pointText}>Little Joker = 1 point</Text>
-          </View>
-          <View style={styles.pointItem}>
             <Text style={styles.pointEmoji}>🎭</Text>
             <Text style={styles.pointText}>Off Jack (same color) = 1 point</Text>
+          </View>
+          <View style={styles.pointItem}>
+            <Text style={styles.pointEmoji}>🃏</Text>
+            <Text style={styles.pointText}>Little Joker = 1 point</Text>
           </View>
           <View style={styles.pointItem}>
             <Text style={styles.pointEmoji}>🔟</Text>
