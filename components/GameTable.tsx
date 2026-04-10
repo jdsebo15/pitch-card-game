@@ -44,6 +44,16 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: 
       top: Math.sin(angle) * radius + (height / 2 - 70),
     };
   };
+  
+  const getPlayerColor = (playerId: string): string => {
+    switch (playerId) {
+      case 'player-1': return '#10b981'; // green - You
+      case 'player-2': return '#3b82f6'; // blue - North
+      case 'player-3': return '#ef4444'; // red - East
+      case 'player-4': return '#f59e0b'; // yellow - West
+      default: return '#9ca3af';
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -73,11 +83,14 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: 
           {centerCards.map(({ card, playerId }, index) => {
             const position = getCardPosition(index, centerCards.length);
             const player = players.find(p => p.id === playerId);
+            const playerColor = getPlayerColor(playerId);
             return (
               <View key={`${card.id}-${index}`} style={[styles.centerCard, position]}>
-                <Card suit={card.suit} rank={card.rank} width={80} height={112} />
+                <View style={[styles.cardBorder, { borderColor: playerColor }]}>
+                  <Card suit={card.suit} rank={card.rank} width={80} height={112} />
+                </View>
                 {player && (
-                  <Text style={styles.cardPlayerName}>{player.name}</Text>
+                  <Text style={[styles.cardPlayerName, { color: playerColor }]}>{player.name}</Text>
                 )}
               </View>
             );
@@ -196,6 +209,11 @@ const styles = StyleSheet.create({
   },
   centerCard: {
     position: 'absolute',
+    alignItems: 'center',
+  },
+  cardBorder: {
+    borderWidth: 3,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
