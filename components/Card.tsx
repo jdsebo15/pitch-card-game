@@ -30,7 +30,7 @@ const suitColors: Record<Suit, string> = {
 const rankDisplay: Record<Rank, string> = {
   '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', '10': '10',
   'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-  'big': 'B', 'little': 'L',
+  'big': 'big', 'little': 'lil',
 };
 
 export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fontSize }: CardProps) {
