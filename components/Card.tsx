@@ -24,7 +24,7 @@ const suitColors: Record<Suit, string> = {
   diamonds: '#dc2626', // red-600
   clubs: '#000000', // black
   spades: '#000000', // black
-  joker: '#7c3aed', // purple-600
+  joker: '#000000', // black (for rank text)
 };
 
 const rankDisplay: Record<Rank, string> = {
@@ -54,8 +54,8 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fon
     return (
       <View style={[styles.card, { width, height }]}>
         <View style={styles.cardCenter}>
-          <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize }]}>🃏</Text>
-          <Text style={[styles.centerRank, { color: suitColors[suit], fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
+          <Text style={[styles.centerSymbol, { color: '#7c3aed', fontSize: centerSymbolSize }]}>🃏</Text>
+          <Text style={[styles.centerRank, { color: '#000000', fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
         </View>
       </View>
     );
