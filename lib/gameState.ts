@@ -122,11 +122,8 @@ export class PitchGame {
     const nextPlayerId = this.getLeftPlayerId(playerId);
     this.state.currentPlayer = nextPlayerId;
     
-    // Check if bidding should end (three passes or back to bidder)
-    if (nextPlayerId === this.state.bidder) {
-      // We've gone full circle back to the bidder
-      this.endBiddingPhase();
-    }
+    // Bidding continues until three passes
+    // (handled in pass logic)
 
     return true;
   }
