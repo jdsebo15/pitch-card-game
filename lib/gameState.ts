@@ -196,12 +196,12 @@ export class PitchGame {
     // Non-trump cards can always be discarded
     if (!isTrump) return true;
 
-    // Trump cards: can only discard if you have more than 6 trump
-    const trumpCards = player.hand.filter(c => this.isTrump(c));
-    if (trumpCards.length <= 6) return false;
-
-    // Even with >6 trump, can't discard trump point cards
+    // Trump cards: can't discard trump point cards (Ace, Jack, 10, 3, 2 of trump)
     const isPointCard = this.isPointCard(card);
+    if (isPointCard) return false;
+
+    // Non-point trump cards are discardable
+    return true;
     if (isPointCard) return false;
 
     return true;

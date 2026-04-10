@@ -128,21 +128,53 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     const remaining = 3 - discards.length;
     return (
       <View style={phaseStyles.container}>
-        <Text style={phaseStyles.title}>Discard {remaining} more card{remaining !== 1 ? 's' : ''}</Text>
-        <Text style={phaseStyles.subtitle}>Select cards to discard from your hand</Text>
+        <Text style={phaseStyles.title}>Discard up to 3 cards</Text>
+        <Text style={phaseStyles.subtitle}>
+          {discards.length} discarded, {remaining} remaining
+        </Text>
+        <Text style={phaseStyles.subtitle}>
+          Can't discard trump point cards (A, J, 10, 3, 2 of trump)
+        </Text>
         <View style={phaseStyles.handPreview}>
           {currentPlayer.hand.map(card => (
             <View key={card.id} style={phaseStyles.previewCard}>
               <Card suit={card.suit} rank={card.rank} width={50} height={70} />
               <TouchableOpacity
-                style={phaseStyles.discardButton}
+                style={[
+                  phaseStyles.discardButton,
+                  !game.canDiscardCard(gameState.currentPlayer, card.id) && phaseStyles.discardDisabled
+                ]}
                 onPress={() => handleDiscardCard(card.id)}
+                disabled={!game.canDiscardCard(gameState.currentPlayer, card.id)}
               >
-                <Text style={phaseStyles.discardButtonText}>Discard</Text>
+                <Text style={phaseStyles.discardButtonText}>
+                  {game.canDiscardCard(gameState.currentPlayer, card.id) ? 'Discard' : 'Keep'}
+                </Text>
               </TouchableOpacity>
             </View>
           ))}
         </View>
+        <TouchableOpacity
+          style={phaseStyles.confirmButton}
+          onPress={() => {
+            // Auto-discard if needed to get to 6 cards
+            const bidder = gameState.players.find(p => p.id === gameState.bidder);
+            if (bidder && bidder.hand.length > 6) {
+              // Auto-discard non-point cards
+              const toDiscard = bidder.hand.length - 6;
+              for (let i = 0; i < toDiscard; i++) {
+                const discardable = bidder.hand.find(card => 
+                  game.canDiscardCard(gameState.currentPlayer, card.id)
+                );
+                if (discardable) {
+                  handleDiscardCard(discardable.id);
+                }
+              }
+            }
+          }}
+        >
+          <Text style={phaseStyles.confirmButtonText}>Done Discarding</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -512,6 +544,10 @@ const phaseStyles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     marginTop: 8,
+  },
+  discardDisabled: {
+    backgroundColor: '#6b7280',
+    opacity: 0.5,
   },
   discardButtonText: {
     color: '#fff',
