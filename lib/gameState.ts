@@ -18,13 +18,12 @@ export class PitchGame {
     const { hands, remainingDeck } = dealCards(deck, numPlayers, 9); // Deal 9 cards each
     
     // Teams: Players across from each other are partners
-    // Assuming positions: North (player-2) and South (player-1) are team 0
-    // East (player-3) and West (player-4) are team 1
+    // Clockwise order: South → West → North → East
     const players: Player[] = [
-      { id: 'player-1', name: 'South', hand: hands[0], isHuman: true, team: 0 }, // South
-      { id: 'player-2', name: 'North', hand: hands[1], isHuman: true, team: 0 }, // North
-      { id: 'player-3', name: 'East', hand: hands[2], isHuman: true, team: 1 }, // East
-      { id: 'player-4', name: 'West', hand: hands[3], isHuman: true, team: 1 }, // West
+      { id: 'player-1', name: 'South', hand: hands[0], isHuman: true, team: 0 }, // South (bottom)
+      { id: 'player-2', name: 'West', hand: hands[1], isHuman: true, team: 1 },  // West (left)
+      { id: 'player-3', name: 'North', hand: hands[2], isHuman: true, team: 0 }, // North (top)
+      { id: 'player-4', name: 'East', hand: hands[3], isHuman: true, team: 1 },  // East (right)
     ];
     
     // Initialize per-hand state

@@ -23,7 +23,8 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     name: p.name,
     handCount: p.hand.length,
     isCurrent: p.id === gameState.currentPlayer,
-    position: (index === 0 ? 'bottom' : index === 1 ? 'top' : index === 2 ? 'right' : 'left') as 'top' | 'right' | 'bottom' | 'left',
+    // Clockwise: South (0) = bottom, West (1) = left, North (2) = top, East (3) = right
+    position: (index === 0 ? 'bottom' : index === 1 ? 'left' : index === 2 ? 'top' : 'right') as 'top' | 'right' | 'bottom' | 'left',
     score: gameState.scores[p.id] || 0,
     team: p.team,
     isBidder: p.id === gameState.bidder,
