@@ -39,8 +39,8 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       const winner = game.getWinner();
       if (winner) {
         Alert.alert(
-          'Game Over!',
-          `${gameState.players.find(p => p.id === winner.playerId)?.name} wins with ${winner.score} points!`,
+          'Hand Over!',
+          `Team 0: ${newState.teamScores[0]}\nTeam 1: ${newState.teamScores[1]}\n\nTop individual this hand: ${gameState.players.find(p => p.id === winner.playerId)?.name} (${winner.score})`,
           [
             { text: 'New Game', onPress: () => setGame(new PitchGame()) },
             { text: 'Main Menu', onPress: onGameEnd },

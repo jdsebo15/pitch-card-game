@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   trumpIndicator: {
     position: 'absolute',
     top: 20,
-    left: 20,
+    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   bidIndicator: {
     position: 'absolute',
-    top: 20,
+    top: 60,
     right: 20,
     backgroundColor: 'rgba(79, 70, 229, 0.8)',
     paddingHorizontal: 12,
