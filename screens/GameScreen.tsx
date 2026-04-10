@@ -517,7 +517,7 @@ const phaseStyles = StyleSheet.create({
   },
   suitButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#fff',
     padding: 16,
     borderRadius: 12,
     width: 80,
