@@ -97,69 +97,79 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   };
   
-  // ─── Overlay rendering ───
-  const renderBiddingOverlay = () => (
-    <Modal transparent visible={gameState.phase === 'bidding'} animationType="slide">
-      <View style={overlayStyles.backdrop}>
-        <View style={overlayStyles.modal}>
-          <BiddingScreen
-            playerHand={currentPlayer.hand}
-            currentBid={gameState.bid}
-            currentPlayer={gameState.currentPlayer}
-            playerName={currentPlayer.name}
-            onPlaceBid={handlePlaceBid}
-            onPass={handlePass}
-          />
-        </View>
+  // ─── Inline UI for each phase ───
+  const renderTrumpUI = () => (
+    <View style={phaseStyles.container}>
+      <Text style={phaseStyles.title}>Choose Trump Suit</Text>
+      <Text style={phaseStyles.subtitle}>You bid {gameState.bid}</Text>
+      <View style={phaseStyles.suitRow}>
+        {['hearts', 'diamonds', 'clubs', 'spades'].map(suit => (
+          <TouchableOpacity
+            key={suit}
+            style={phaseStyles.suitButton}
+            onPress={() => handleChooseTrump(suit as Suit)}
+          >
+            <Text style={[
+              phaseStyles.suitSymbol,
+              { color: suit === 'hearts' || suit === 'diamonds' ? '#dc2626' : '#000' }
+            ]}>
+              {suit === 'hearts' ? '♥' : suit === 'diamonds' ? '♦' : suit === 'clubs' ? '♣' : '♠'}
+            </Text>
+            <Text style={phaseStyles.suitLabel}>{suit}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
-    </Modal>
+    </View>
   );
-  
-  const renderTrumpOverlay = () => (
-    <Modal transparent visible={gameState.phase === 'choosing-trump'} animationType="slide">
-      <View style={overlayStyles.backdrop}>
-        <View style={overlayStyles.modal}>
-          <TrumpSelectionScreen
-            playerHand={currentPlayer.hand}
-            forcedBid={gameState.forcedBid}
-            bid={gameState.bid}
-            onChooseTrump={handleChooseTrump}
-          />
+
+  const renderDiscardUI = () => {
+    const discards = game.getDiscards(gameState.currentPlayer);
+    const remaining = 3 - discards.length;
+    return (
+      <View style={phaseStyles.container}>
+        <Text style={phaseStyles.title}>Discard {remaining} more card{remaining !== 1 ? 's' : ''}</Text>
+        <Text style={phaseStyles.subtitle}>Select cards to discard from your hand</Text>
+        <View style={phaseStyles.handPreview}>
+          {currentPlayer.hand.map(card => (
+            <View key={card.id} style={phaseStyles.previewCard}>
+              <Card suit={card.suit} rank={card.rank} width={50} height={70} />
+              <TouchableOpacity
+                style={phaseStyles.discardButton}
+                onPress={() => handleDiscardCard(card.id)}
+              >
+                <Text style={phaseStyles.discardButtonText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       </View>
-    </Modal>
-  );
-  
-  const renderDiscardOverlay = () => (
-    <Modal transparent visible={gameState.phase === 'discarding'} animationType="slide">
-      <View style={overlayStyles.backdrop}>
-        <View style={overlayStyles.modal}>
-          <DiscardingScreen
-            playerHand={currentPlayer.hand}
-            trumpSuit={gameState.trumpSuit}
-            currentPlayer={gameState.currentPlayer}
-            playerName={currentPlayer.name}
-            discards={game.getDiscards(gameState.currentPlayer)}
-            onDiscardCard={handleDiscardCard}
-            onComplete={() => {}}
-          />
-        </View>
-      </View>
-    </Modal>
-  );
-  
-  const renderKittyOverlay = () => (
-    <Modal transparent visible={gameState.phase === 'selecting-kitty'} animationType="slide">
-      <View style={overlayStyles.backdrop}>
-        <View style={overlayStyles.modal}>
-          <BidderHandSelectionScreen
-            cards={game.getBidderPool()}
-            trumpSuit={gameState.trumpSuit}
-            onConfirm={handleConfirmBidderHand}
-          />
-        </View>
-      </View>
-    </Modal>
+    );
+  };
+
+  const renderKittyUI = () => (
+    <View style={phaseStyles.container}>
+      <Text style={phaseStyles.title}>Select Your Final 6 Cards</Text>
+      <Text style={phaseStyles.subtitle}>Choose 6 cards from the pool</Text>
+      <TouchableOpacity
+        style={phaseStyles.confirmButton}
+        onPress={() => {
+          // Auto-pick the 6 highest-value cards
+          const pool = game.getBidderPool();
+          const selected = [...pool]
+            .sort((a, b) => {
+              // Simple value sort (trump high)
+              const aVal = a.suit === gameState.trumpSuit ? 100 : 0;
+              const bVal = b.suit === gameState.trumpSuit ? 100 : 0;
+              return bVal - aVal;
+            })
+            .slice(0, 6)
+            .map(c => c.id);
+          handleConfirmBidderHand(selected);
+        }}
+      >
+        <Text style={phaseStyles.confirmButtonText}>Auto‑Pick Best 6 Cards</Text>
+      </TouchableOpacity>
+    </View>
   );
   
   // ─── Main table view ───
@@ -293,11 +303,10 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         <Text style={styles.debugButtonText}>🔍</Text>
       </TouchableOpacity>
       
-      {/* Overlays */}
-      {renderBiddingOverlay()}
-      {renderTrumpOverlay()}
-      {renderDiscardOverlay()}
-      {renderKittyOverlay()}
+      {/* Phase-specific UI */}
+      {gameState.phase === 'choosing-trump' && renderTrumpUI()}
+      {gameState.phase === 'discarding' && renderDiscardUI()}
+      {gameState.phase === 'selecting-kitty' && renderKittyUI()}
       
       {/* Debug overlay */}
       <DebugOverlay
@@ -493,6 +502,89 @@ const biddingStyles = StyleSheet.create({
   passText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+const phaseStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    padding: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    color: '#cbd5e0',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  suitRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 20,
+  },
+  suitButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 16,
+    borderRadius: 12,
+    minWidth: 80,
+  },
+  suitSymbol: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  suitLabel: {
+    color: '#fff',
+    fontSize: 14,
+    textTransform: 'capitalize',
+  },
+  handPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  previewCard: {
+    alignItems: 'center',
+  },
+  discardButton: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  discardButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
