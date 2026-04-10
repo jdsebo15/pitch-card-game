@@ -360,6 +360,11 @@ const infoStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   scoreColumn: {
     gap: 4,
