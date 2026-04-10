@@ -20,10 +20,10 @@ export class PitchGame {
     // Teams: Players across from each other are partners
     // Clockwise order: South → West → North → East
     const players: Player[] = [
-      { id: 'player-1', name: 'South', hand: hands[0], isHuman: true, team: 0 }, // South (bottom)
-      { id: 'player-2', name: 'West', hand: hands[1], isHuman: true, team: 1 },  // West (left)
-      { id: 'player-3', name: 'North', hand: hands[2], isHuman: true, team: 0 }, // North (top)
-      { id: 'player-4', name: 'East', hand: hands[3], isHuman: true, team: 1 },  // East (right)
+      { id: 'player-1', name: 'You', hand: hands[0], isHuman: true, team: 0 },    // South (bottom)
+      { id: 'player-2', name: 'Bob', hand: hands[1], isHuman: true, team: 1 },    // West (left)
+      { id: 'player-3', name: 'Alice', hand: hands[2], isHuman: true, team: 0 },  // North (top)
+      { id: 'player-4', name: 'Charlie', hand: hands[3], isHuman: true, team: 1 }, // East (right)
     ];
     
     // Initialize per-hand state

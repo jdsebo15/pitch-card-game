@@ -55,9 +55,6 @@ function PlayerBadge({
           </View>
         )}
       </View>
-      <Text style={[badgeStyles.sub, { color: teamColor }]}>
-        {player.handCount} cards · {player.score} pts
-      </Text>
     </View>
   );
 }
@@ -351,11 +348,6 @@ const badgeStyles = StyleSheet.create({
     color: '#000',
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  sub: {
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 2,
   },
 });
 
