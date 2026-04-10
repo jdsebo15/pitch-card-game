@@ -30,7 +30,7 @@ const suitColors: Record<Suit, string> = {
 const rankDisplay: Record<Rank, string> = {
   '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9', '10': '10',
   'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
-  'big': 'Big', 'little': 'Little',
+  'big': 'B', 'little': 'L',
 };
 
 export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fontSize }: CardProps) {
@@ -52,11 +52,10 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fon
 
   if (suit === 'joker') {
     return (
-      <View style={[styles.card, { width, height }, styles.jokerCard]}>
-        <View style={styles.jokerCenter}>
-          <Text style={[styles.jokerSymbol, { fontSize: jokerSymbolSize }]}>🃏</Text>
-          <Text style={[styles.jokerText, { fontSize: jokerTextSize }]}>{rankDisplay[rank]} Joker</Text>
-          <Text style={[styles.jokerPoint, { fontSize: jokerPointSize }]}>1 point</Text>
+      <View style={[styles.card, { width, height }]}>
+        <View style={styles.cardCenter}>
+          <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize }]}>🃏</Text>
+          <Text style={[styles.centerRank, { color: suitColors[suit], fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
         </View>
       </View>
     );
@@ -108,26 +107,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 4,
   },
-  jokerCard: {
-    backgroundColor: '#fef3c7', // yellow-50
-    borderWidth: 2,
-    borderColor: '#7c3aed', // purple-600
-  },
-  jokerCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  jokerSymbol: {
-    marginBottom: 8,
-  },
-  jokerText: {
-    fontWeight: 'bold',
-    color: '#7c3aed', // purple-600
-    marginBottom: 4,
-  },
-  jokerPoint: {
-    color: '#dc2626', // red-600
-    fontWeight: '600',
-  },
+
 });
