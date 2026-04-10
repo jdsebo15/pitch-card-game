@@ -131,12 +131,13 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
     if (card.rank === 'A') return 116;
     if (card.rank === 'K') return 115;
     if (card.rank === 'Q') return 114;
-  }
-
-  if (isOffJack(card, trumpSuit)) return 117; // Left Bower (off-jack)
+    // Other trump cards (10, 9, ..., 2)
     return 100 + baseRankValues[card.rank];
   }
 
+  if (isOffJack(card, trumpSuit)) return 117; // Left Bower (off-jack)
+
+  // Non-trump cards
   return baseRankValues[card.rank];
 }
 
