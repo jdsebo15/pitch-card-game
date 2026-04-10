@@ -90,13 +90,22 @@ export class PitchGame {
     return ids[(idx + 1) % ids.length];
   }
   
+  private getNextNonPassedPlayer(playerId: string): string {
+    let nextId = this.getLeftPlayerId(playerId);
+    // Skip passed players
+    while (this.passedPlayers.has(nextId) && nextId !== this.state.bidder) {
+      nextId = this.getLeftPlayerId(nextId);
+    }
+    return nextId;
+  }
+  
   placeBid(playerId: string, bid: number): boolean {
     if (this.state.phase !== 'bidding') return false;
     if (this.state.currentPlayer !== playerId) return false;
 
     if (bid === 0) {
       this.passedPlayers.add(playerId);
-      const nextPlayerId = this.getLeftPlayerId(playerId);
+      const nextPlayerId = this.getNextNonPassedPlayer(playerId);
 
       if (nextPlayerId === this.state.dealer && this.state.bid === null) {
         this.state.forcedBid = true;
@@ -119,7 +128,7 @@ export class PitchGame {
     this.state.bid = bid;
     this.state.bidder = playerId;
 
-    const nextPlayerId = this.getLeftPlayerId(playerId);
+    const nextPlayerId = this.getNextNonPassedPlayer(playerId);
     this.state.currentPlayer = nextPlayerId;
     
     // Bidding continues until three passes
