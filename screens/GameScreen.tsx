@@ -257,42 +257,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         </View>
       )}
       
-      {/* Game info overlay (top-left) */}
-      <View style={styles.gameInfo}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Phase:</Text>
-          <Text style={styles.infoValue}>
-            {gameState.phase === 'playing' ? 'Playing' : gameState.phase === 'scoring' ? 'Scoring' : gameState.phase}
-          </Text>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Trump:</Text>
-          <Text style={styles.infoValue}>
-            {gameState.trumpSuit ? 
-              (gameState.trumpSuit === 'hearts' ? '♥ Hearts' :
-               gameState.trumpSuit === 'diamonds' ? '♦ Diamonds' :
-               gameState.trumpSuit === 'clubs' ? '♣ Clubs' : 
-               gameState.trumpSuit === 'spades' ? '♠ Spades' :
-               '🃏 Joker') : 
-              'Not set'}
-          </Text>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Bid:</Text>
-          <Text style={styles.infoValue}>
-            {gameState.bid !== null ? `${gameState.bid} by ${gameState.players.find(p => p.id === gameState.bidder)?.name}` : 'None'}
-          </Text>
-        </View>
-        
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Tricks:</Text>
-          <Text style={styles.infoValue}>
-            {gameState.tricks.filter(t => t.winner).length} completed
-          </Text>
-        </View>
-      </View>
+
       
       {/* Menu button */}
       <TouchableOpacity style={styles.menuButton} onPress={onGameEnd}>
@@ -379,29 +344,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  gameInfo: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    padding: 12,
-    borderRadius: 12,
-    minWidth: 180,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  infoLabel: {
-    color: '#a0aec0',
-    fontSize: 14,
-  },
-  infoValue: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+
   menuButton: {
     position: 'absolute',
     top: 60,
