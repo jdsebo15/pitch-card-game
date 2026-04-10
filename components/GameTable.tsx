@@ -83,7 +83,7 @@ function HorizontalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSui
 function VerticalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?: Suit | null }) {
   const sorted = sortCards(cards, trumpSuit || null);
   const show = Math.min(sorted.length, 8);
-  const overlap = 16;
+  const overlap = 12; // Reduced from 16 for more spacing
   const totalH = SIDE_CARD_H + (show - 1) * (SIDE_CARD_H - overlap);
   return (
     <View style={{ width: SIDE_CARD_W, height: totalH, position: 'relative' }}>
