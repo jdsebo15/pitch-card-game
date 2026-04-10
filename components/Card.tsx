@@ -64,17 +64,9 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fon
 
   return (
     <View style={[styles.card, { width, height }]}>
-      <View style={styles.cardCorner}>
-        <Text style={[styles.rankText, { color: suitColors[suit], fontSize: rankSize }]}>{rankDisplay[rank]}</Text>
-        <Text style={[styles.suitText, { color: suitColors[suit], fontSize: suitSize }]}>{suitSymbols[suit]}</Text>
-      </View>
       <View style={styles.cardCenter}>
         <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize }]}>{suitSymbols[suit]}</Text>
         <Text style={[styles.centerRank, { color: suitColors[suit], fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
-      </View>
-      <View style={[styles.cardCorner, styles.cardCornerBottom]}>
-        <Text style={[styles.rankText, { color: suitColors[suit], fontSize: rankSize, transform: [{ rotate: '180deg' }] }]}>{rankDisplay[rank]}</Text>
-        <Text style={[styles.suitText, { color: suitColors[suit], fontSize: suitSize, transform: [{ rotate: '180deg' }] }]}>{suitSymbols[suit]}</Text>
       </View>
     </View>
   );
@@ -103,18 +95,7 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     borderStyle: 'dashed',
   },
-  cardCorner: {
-    alignItems: 'flex-start',
-  },
-  cardCornerBottom: {
-    alignItems: 'flex-end',
-  },
-  rankText: {
-    fontWeight: 'bold',
-  },
-  suitText: {
-    marginTop: -4,
-  },
+  // (removed corner styles)
   cardCenter: {
     alignItems: 'center',
     justifyContent: 'center',
