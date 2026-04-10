@@ -25,7 +25,9 @@ export default function App() {
               
               <Text style={styles.rulesSection}>💰 Bidding</Text>
               <Text style={styles.rulesText}>
-                Each player is dealt 9 cards. Players bid on how many points they think they can take (2-4). The highest bidder chooses the trump suit.
+                Each player is dealt 9 cards. Bidding starts to the left of the dealer.{'\n'}
+                Minimum bid is 5 points. Players bid on how many points they think they can take.{'\n'}
+                The highest bidder chooses the trump suit.
               </Text>
               
               <Text style={styles.rulesSection}>🗑️ Discarding Phase</Text>

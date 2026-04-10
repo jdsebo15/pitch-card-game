@@ -23,10 +23,16 @@ export class PitchGame {
     // Initialize discards map
     players.forEach(p => this.discards.set(p.id, []));
     
+    // Bidding starts to the left of the dealer
+    // Assuming player-1 is dealer, bidding starts with player-2 (to the left)
+    const dealerIndex = 0; // player-1 is dealer
+    const firstBidderIndex = (dealerIndex + 1) % players.length;
+    const firstBidder = players[firstBidderIndex];
+    
     return {
       players,
       deck: remainingDeck,
-      currentPlayer: 'player-1',
+      currentPlayer: firstBidder.id, // Start bidding with player to left of dealer
       trumpSuit: null,
       bid: null,
       bidder: null,
@@ -115,8 +121,8 @@ export class PitchGame {
     if (this.state.phase !== 'bidding') return false;
     if (this.state.currentPlayer !== playerId) return false;
     
-    // Validate bid (2-4 in standard Pitch)
-    if (bid < 2 || bid > 4) return false;
+    // Validate bid (minimum 5 in this variation)
+    if (bid < 5) return false;
     
     // Must be higher than current bid
     if (this.state.bid !== null && bid <= this.state.bid) return false;
@@ -438,12 +444,13 @@ export class PitchGame {
     
     let bid = 0; // Pass
     
-    if (trumpCandidates >= 2 && highCards >= 3) {
-      bid = 4;
+    // With minimum bid of 5, AI needs stronger hand to bid
+    if (trumpCandidates >= 3 && highCards >= 4) {
+      bid = 7; // Strong hand
+    } else if (trumpCandidates >= 2 && highCards >= 3) {
+      bid = 6; // Good hand
     } else if (trumpCandidates >= 1 && highCards >= 2) {
-      bid = 3;
-    } else if (highCards >= 2) {
-      bid = 2;
+      bid = 5; // Minimum bid
     }
     
     // Only bid if higher than current bid

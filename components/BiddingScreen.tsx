@@ -24,7 +24,7 @@ export function BiddingScreen({
   
   const isPlayerTurn = currentPlayer === 'player-1';
   
-  const bids = [2, 3, 4];
+  const bids = [5, 6, 7, 8, 9, 10]; // Minimum bid is 5
   
   const handleBid = (bid: number) => {
     if (!isPlayerTurn) return;
@@ -68,7 +68,8 @@ export function BiddingScreen({
       <View style={styles.biddingSection}>
         <Text style={styles.sectionTitle}>Place Your Bid</Text>
         <Text style={styles.bidInstructions}>
-          Bid how many points (2-4) you think you can make.{'\n'}
+          Bid how many points (minimum 5) you think you can make.{'\n'}
+          Bidding starts to the left of the dealer.{'\n'}
           You must bid higher than the current bid or pass.
         </Text>
         
