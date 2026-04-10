@@ -216,6 +216,36 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         </View>
       )}
       
+      {/* Bidding UI (inline on table) */}
+      {gameState.phase === 'bidding' && (
+        <View style={biddingStyles.container}>
+          <Text style={biddingStyles.title}>
+            {currentPlayer.name}'s turn to bid
+          </Text>
+          <View style={biddingStyles.bidRow}>
+            {[5, 6, 7, 8, 9, 10].map(bid => (
+              <TouchableOpacity
+                key={bid}
+                style={[
+                  biddingStyles.bidButton,
+                  gameState.bid !== null && bid <= gameState.bid && biddingStyles.bidDisabled
+                ]}
+                onPress={() => handlePlaceBid(bid)}
+                disabled={gameState.bid !== null && bid <= gameState.bid}
+              >
+                <Text style={biddingStyles.bidText}>{bid}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={biddingStyles.passButton}
+            onPress={handlePass}
+          >
+            <Text style={biddingStyles.passText}>Pass</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       {/* Game info overlay (top-left) */}
       <View style={styles.gameInfo}>
         <View style={styles.infoRow}>
@@ -409,5 +439,60 @@ const overlayStyles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     maxHeight: '90%',
+  },
+});
+
+const biddingStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  bidRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  bidButton: {
+    backgroundColor: '#3b82f6',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bidDisabled: {
+    backgroundColor: '#6b7280',
+    opacity: 0.5,
+  },
+  bidText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  passButton: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  passText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
