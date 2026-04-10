@@ -40,25 +40,19 @@ export function DiscardingScreen({
   };
   
   const canDiscardCard = (card: GameCard): boolean => {
-    // Can't discard if not player's turn
     if (!isPlayerTurn) return false;
-    
-    // Already discarded enough
     if (cardsDiscarded >= cardsToDiscard) return false;
     
     const cardIsTrump = isTrump(card);
     const isPoint = isPointCard(card);
-    
-    // Can't discard trump point cards
-    if (cardIsTrump && isPoint) return false;
-    
-    // Can only discard trump if you have more than 6 trump cards
-    if (cardIsTrump) {
-      const trumpCount = playerHand.filter(isTrump).length;
-      if (trumpCount <= 6) return false;
-    }
+    const trumpCount = playerHand.filter(isTrump).length;
 
-    // Non-trump point cards CAN be discarded
+    console.log(`[canDiscard] ${card.rank}${card.suit} | trump=${cardIsTrump} point=${isPoint} trumpCount=${trumpCount}`);
+
+    if (cardIsTrump && isPoint) { console.log('  -> BLOCKED: trump point card'); return false; }
+    if (cardIsTrump && trumpCount <= 6) { console.log('  -> BLOCKED: trump count <= 6'); return false; }
+
+    console.log('  -> ALLOWED');
     return true;
   };
   
