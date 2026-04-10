@@ -424,33 +424,23 @@ export class PitchGame {
   }
 
   private makeAIDiscard(playerId: string): void {
-    const player = this.state.players.find(p => p.id === playerId)!;
-    
-    // AI discarding strategy:
-    // 1. Try to discard non-point, non-trump cards first
-    // 2. If must discard trump, discard lowest non-point trump
-    // 3. Keep point cards and high trump cards
-    
-    // Find discardable cards
-    const discardableCards = player.hand.filter(card => 
-      this.canDiscardCard(playerId, card)
-    );
-    
-    if (discardableCards.length === 0) {
-      // No discardable cards (shouldn't happen with proper rules)
-      return;
+    // Discard all 3 cards at once so we don't get stuck waiting for re-renders
+    for (let i = 0; i < 3; i++) {
+      if (this.state.phase !== 'discarding') break;
+
+      const player = this.state.players.find(p => p.id === playerId)!;
+      const discardableCards = player.hand.filter(card =>
+        this.canDiscardCard(playerId, card)
+      );
+
+      if (discardableCards.length === 0) break;
+
+      discardableCards.sort((a, b) =>
+        getCardValue(a, this.state.trumpSuit) - getCardValue(b, this.state.trumpSuit)
+      );
+
+      this.discardCard(playerId, discardableCards[0].id);
     }
-    
-    // Sort by value (discard lowest value cards first)
-    discardableCards.sort((a, b) => {
-      const aValue = getCardValue(a, this.state.trumpSuit);
-      const bValue = getCardValue(b, this.state.trumpSuit);
-      return aValue - bValue;
-    });
-    
-    // Discard the lowest value discardable card
-    const cardToDiscard = discardableCards[0];
-    this.discardCard(playerId, cardToDiscard.id);
   }
   
   private makeAIBid(playerId: string): void {
