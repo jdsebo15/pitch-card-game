@@ -1,71 +1,81 @@
 # Pitch Card Game
 
-A React Native iOS implementation of the classic trick-taking card game Pitch (also known as Setback or High-Low-Jack).
+A complete Pitch card game implementation built with React Native and Expo.
 
 ## Features
 
-- **Complete card game implementation** with proper Pitch rules
-- **Beautiful card visuals** with smooth animations
-- **AI opponents** for single-player gameplay
-- **Local multiplayer** (pass-and-play) support
-- **Game state management** with TypeScript safety
+- **Complete Pitch Rules**: Implements the classic 4-player Pitch card game with teams
+- **Team Play**: North-South vs East-West partnership scoring
+- **Full Game Flow**: Deal → Bidding → Discarding → Playing → Scoring
+- **AI Opponents**: Three AI players with basic strategy
+- **React Native UI**: Clean, responsive card table interface
+- **Expo Ready**: Built with Expo SDK for easy deployment
 
-## Game Rules (Pitch)
+## Game Rules
 
-Pitch is a trick-taking game for 2-4 players (usually 4 in partnerships) where players bid on how many points they can take. Points are earned from:
-- **High**: Ace of trump
-- **Low**: 2 of trump  
-- **Jack**: Jack of trump
-- **Game**: Points from high cards (A=4, K=3, Q=2, J=1, 10=10)
+Pitch is a trick-taking game where:
+- 4 players in 2 teams (partners sit across from each other)
+- 9 cards dealt to each player
+- Bidding starts at 5 points, maximum 10 points
+- Trump suit determined by bidder
+- Players discard down to 6 cards
+- Point cards: A (1), J of trump (1), off-jack (1), jokers (1 each), 10 (1), 3 (3), 2 (1)
+- Team with highest bid tries to make their bid, opponents try to stop them
 
 ## Tech Stack
 
-- **React Native** with **Expo** (iOS only)
+- **React Native** with **Expo SDK 54**
 - **TypeScript** for type safety
-- **React Native Reanimated** for smooth animations
-- **React Native Gesture Handler** for card interactions
-- **Custom game engine** with complete Pitch logic
+- **NativeWind 4** for styling (Tailwind CSS for React Native)
+- **Expo Router** for navigation
+- **React Native Game Engine** for game state management
 
 ## Getting Started
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/jdsebo15/pitch-card-game.git
+cd pitch-card-game
 
-2. Start the development server:
-   ```bash
-   npm run ios
-   ```
+# Install dependencies
+npm install
 
-3. Use the Expo Go app on your iOS device to scan the QR code.
+# Start the development server
+npx expo start
+```
 
 ## Project Structure
 
-- `/components` - React components (Card, PlayerHand, GameTable, etc.)
-- `/lib` - Game logic and utilities
-- `/screens` - Game screens (Home, Game, Settings, etc.)
-- `/assets` - Images, sounds, and other assets
+```
+├── components/          # React components
+│   ├── BiddingScreen.tsx
+│   ├── Card.tsx
+│   ├── DiscardingScreen.tsx
+│   └── GameTable.tsx
+├── lib/                 # Game logic
+│   ├── game.ts         # Core game functions
+│   └── gameState.ts    # Game state management
+├── screens/            # App screens
+│   └── GameScreen.tsx  # Main game screen
+├── App.tsx             # App entry point
+└── README.md           # This file
+```
+
+## Recent Updates
+
+- **Complete team-based scoring** with proper trick resolution
+- **Fixed bidding system** with pass handling and forced dealer bid
+- **Correct trump logic** including off-jack and jokers
+- **UI improvements** for team display and game flow
 
 ## Development Status
 
-✅ **Completed:**
-- Basic project setup with Expo + TypeScript
-- Card component with suits and ranks
-- Game logic foundation (deck creation, shuffling, dealing)
-- Basic UI with game start screen
-
-🔄 **In Progress:**
-- Game state management
-- Bidding system
-- Trick-taking logic
-- AI opponent implementation
-
-📋 **Planned:**
-- Online multiplayer
-- Tutorial mode
-- Different game variations
-- Sound effects and music
+✅ **Core game engine complete**  
+✅ **Team scoring implemented**  
+✅ **AI opponents functional**  
+✅ **UI/UX polished**  
+🔄 **Manual trump selection** (planned)  
+🔄 **Manual card selection from kitty** (planned)
 
 ## License
 
