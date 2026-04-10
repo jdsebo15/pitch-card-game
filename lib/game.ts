@@ -75,21 +75,63 @@ export function dealCards(deck: GameCard[], numPlayers: number): { hands: GameCa
 }
 
 export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
-  // In Pitch: J of trump is highest, then A, K, Q, 10, 9, etc.
-  // Non-trump suits: A, K, Q, J, 10, 9, etc.
+  // Your specified catch order:
+  // 1. A1 (highest)
+  // 2. K0 
+  // 3. Q0
+  // 4. Main jack 1 (jack of trump)
+  // 5. Big joker 1 (not in standard deck)
+  // 6. Off jack 1 (jack of same color as trump)
+  // 7. Little joker 1 (not in standard deck)
+  // 8. 10-1
+  // 9. 9, 8, 7, 6, 5, 4 (no points)
+  // 10. 3-3
+  // 11. 2-1 (lowest, but auto-keep)
   
   const isTrump = trumpSuit && card.suit === trumpSuit;
-  const rankValues: Record<Rank, number> = {
-    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
-    'J': 11, 'Q': 12, 'K': 13, 'A': 14,
+  
+  // Base ranking values for trick-winning (higher = wins trick)
+  const baseRankValues: Record<Rank, number> = {
+    '2': 1,   // 2-1 (lowest rank but has point value)
+    '3': 11,  // 3-3 (higher than 4-9 but lower than 10)
+    '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8,
+    '10': 9,  // 10-1
+    'J': 12,  // Jack (will be adjusted for trump)
+    'Q': 13,  // Q0
+    'K': 14,  // K0  
+    'A': 15,  // A1 (highest non-trump-special)
   };
   
-  let value = rankValues[card.rank];
+  let value = baseRankValues[card.rank];
   
   // Adjust for trump suit special rules
   if (isTrump) {
-    if (card.rank === 'J') return 20; // Right bower (jack of trump)
-    // Note: Left bower logic would need to check for jack of same color suit
+    // Trump cards are generally higher than non-trump
+    value += 20; // Boost trump cards above non-trump
+    
+    // Special trump rankings:
+    if (card.rank === 'J') return 40; // Main jack (highest)
+    if (card.rank === 'A') return 39; // Ace of trump
+    if (card.rank === 'K') return 38; // King of trump
+    if (card.rank === 'Q') return 37; // Queen of trump
+    if (card.rank === '2') return 21; // 2 of trump (auto-keep, but low rank)
+    // Other trump cards keep their boosted value
+  }
+  
+  // Handle off-jack (jack of same color as trump)
+  if (trumpSuit && card.rank === 'J') {
+    const isSameColor = (
+      (trumpSuit === 'hearts' || trumpSuit === 'diamonds') && 
+      (card.suit === 'hearts' || card.suit === 'diamonds')
+    ) || (
+      (trumpSuit === 'clubs' || trumpSuit === 'spades') && 
+      (card.suit === 'clubs' || card.suit === 'spades')
+    );
+    
+    if (isSameColor && card.suit !== trumpSuit) {
+      // Off jack ranks between main jack and ace
+      return 35;
+    }
   }
   
   return value;
@@ -156,18 +198,27 @@ export function calculatePoints(trick: Trick, trumpSuit: Suit): number {
   let points = 0;
   
   for (const { card } of trick.cards) {
-    // High: Ace of trump
-    if (card.suit === trumpSuit && card.rank === 'A') points += 1;
-    // Low: 2 of trump
-    if (card.suit === trumpSuit && card.rank === '2') points += 1;
-    // Jack: Jack of trump
-    if (card.suit === trumpSuit && card.rank === 'J') points += 1;
-    // Game: Count points from high cards
-    if (card.rank === '10') points += 10;
-    if (card.rank === 'J') points += 1;
-    if (card.rank === 'Q') points += 2;
-    if (card.rank === 'K') points += 3;
-    if (card.rank === 'A') points += 4;
+    // Your specified point values:
+    if (card.rank === 'A') points += 1;          // A1
+    // King = 0 points (K0)
+    // Queen = 0 points (Q0)
+    
+    if (card.suit === trumpSuit && card.rank === 'J') points += 1; // Main jack 1
+    
+    // Note: Jokers not in standard deck - would need to add them
+    // Big joker = 1 point
+    // Off jack (jack of same color) = 1 point  
+    // Little joker = 1 point
+    
+    if (card.rank === '10') points += 1;        // 10-1
+    if (card.rank === '3') points += 3;         // 3-3
+    if (card.rank === '2') points += 1;         // 2-1 (auto keep)
+    
+    // Additional logic for 2 of trump auto-keep
+    if (card.suit === trumpSuit && card.rank === '2') {
+      // The 2 of trump is automatically kept by whoever catches it
+      // This is handled in the game state logic
+    }
   }
   
   return points;

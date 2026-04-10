@@ -28,12 +28,18 @@ export default function App() {
                 Players bid on how many points they think they can take (2-4). The highest bidder chooses the trump suit.
               </Text>
               
-              <Text style={styles.rulesSection}>🎯 Scoring Points</Text>
+              <Text style={styles.rulesSection}>🎯 Point Values (Catch Order)</Text>
               <Text style={styles.rulesText}>
-                • High: Ace of trump (1 point){'\n'}
-                • Low: 2 of trump (1 point){'\n'}
-                • Jack: Jack of trump (1 point){'\n'}
-                • Game: High cards (A=4, K=3, Q=2, J=1, 10=10)
+                1. 🅰️ Ace = 1 point (highest){'\n'}
+                2. 🇰 King = 0 points{'\n'}
+                3. 🇶 Queen = 0 points{'\n'}
+                4. 🎃 Main Jack (trump) = 1 point{'\n'}
+                5. 🃏 Off Jack (same color) = 1 point{'\n'}
+                6. 🔟 10 = 1 point{'\n'}
+                7. 9, 8, 7, 6, 5, 4 = 0 points{'\n'}
+                8. 3️⃣ 3 = 3 points{'\n'}
+                9. 2️⃣ 2 = 1 point (auto-keep){'\n'}{'\n'}
+                Note: 2 of trump is automatically kept by whoever catches it, even if they don't win the trick.
               </Text>
               
               <Text style={styles.rulesSection}>🃏 Game Play</Text>

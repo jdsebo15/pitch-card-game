@@ -126,23 +126,39 @@ export function BiddingScreen({
       </View>
       
       <View style={styles.bidInfo}>
-        <Text style={styles.infoTitle}>Pitch Scoring Points:</Text>
+        <Text style={styles.infoTitle}>Point Values (Catch Order):</Text>
         <View style={styles.pointsList}>
           <View style={styles.pointItem}>
-            <Text style={styles.pointEmoji}>🔼</Text>
-            <Text style={styles.pointText}>High: Ace of trump (1 point)</Text>
+            <Text style={styles.pointEmoji}>🅰️</Text>
+            <Text style={styles.pointText}>Ace = 1 point (highest)</Text>
           </View>
           <View style={styles.pointItem}>
-            <Text style={styles.pointEmoji}>🔽</Text>
-            <Text style={styles.pointText}>Low: 2 of trump (1 point)</Text>
+            <Text style={styles.pointEmoji}>🇰</Text>
+            <Text style={styles.pointText}>King = 0 points</Text>
+          </View>
+          <View style={styles.pointItem}>
+            <Text style={styles.pointEmoji}>🇶</Text>
+            <Text style={styles.pointText}>Queen = 0 points</Text>
           </View>
           <View style={styles.pointItem}>
             <Text style={styles.pointEmoji}>🎃</Text>
-            <Text style={styles.pointText}>Jack: Jack of trump (1 point)</Text>
+            <Text style={styles.pointText}>Main Jack (trump) = 1 point</Text>
           </View>
           <View style={styles.pointItem}>
-            <Text style={styles.pointEmoji}>🎮</Text>
-            <Text style={styles.pointText}>Game: High cards (A=4, K=3, Q=2, J=1, 10=10)</Text>
+            <Text style={styles.pointEmoji}>🃏</Text>
+            <Text style={styles.pointText}>Off Jack (same color) = 1 point</Text>
+          </View>
+          <View style={styles.pointItem}>
+            <Text style={styles.pointEmoji}>🔟</Text>
+            <Text style={styles.pointText}>10 = 1 point</Text>
+          </View>
+          <View style={styles.pointItem}>
+            <Text style={styles.pointEmoji}>3️⃣</Text>
+            <Text style={styles.pointText}>3 = 3 points</Text>
+          </View>
+          <View style={styles.pointItem}>
+            <Text style={styles.pointEmoji}>2️⃣</Text>
+            <Text style={styles.pointText}>2 = 1 point (auto-keep)</Text>
           </View>
         </View>
       </View>

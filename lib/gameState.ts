@@ -139,6 +139,17 @@ export class PitchGame {
     const points = calculatePoints(trick, this.state.trumpSuit);
     this.state.scores[winnerId] += points;
     
+    // Special rule: 2 of trump auto-keep
+    // The player who catches the 2 of trump gets the point, even if they don't win the trick
+    for (const { card, playerId } of trick.cards) {
+      if (card.suit === this.state.trumpSuit && card.rank === '2') {
+        // The catcher of the 2 gets the point
+        this.state.scores[playerId] += 1;
+        // Note: We already added the point in calculatePoints, but this ensures
+        // the catcher gets it regardless of trick winner
+      }
+    }
+    
     // Winner leads next trick
     this.state.currentPlayer = winnerId;
     
