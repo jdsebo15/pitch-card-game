@@ -125,12 +125,16 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
 
   const renderDiscardUI = () => {
     const discards = game.getDiscards(gameState.currentPlayer);
-    const remaining = 3 - discards.length;
+    const handSize = currentPlayer.hand.length;
+    const needToDiscard = Math.max(0, handSize - 6);
+    const remainingSlots = 3 - discards.length;
+    const canDiscardMore = needToDiscard > 0 && remainingSlots > 0;
+    
     return (
       <View style={phaseStyles.container}>
-        <Text style={phaseStyles.title}>Discard up to 3 cards</Text>
+        <Text style={phaseStyles.title}>Discard {needToDiscard} card{needToDiscard !== 1 ? 's' : ''}</Text>
         <Text style={phaseStyles.subtitle}>
-          {discards.length} discarded, {remaining} remaining
+          You have {handSize} cards • Need exactly 6 • {discards.length} discarded
         </Text>
         <Text style={phaseStyles.subtitle}>
           Can't discard trump point cards (A, J, 10, 3, 2 of trump)
@@ -160,20 +164,25 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
             // Auto-discard if needed to get to 6 cards
             const bidder = gameState.players.find(p => p.id === gameState.bidder);
             if (bidder && bidder.hand.length > 6) {
-              // Auto-discard non-point cards
-              const toDiscard = bidder.hand.length - 6;
+              // Find all discardable cards
+              const discardableCards = bidder.hand.filter(card => 
+                game.canDiscardCard(gameState.currentPlayer, card.id)
+              );
+              // Discard enough to reach 6
+              const toDiscard = Math.min(bidder.hand.length - 6, discardableCards.length, 3 - discards.length);
               for (let i = 0; i < toDiscard; i++) {
-                const discardable = bidder.hand.find(card => 
-                  game.canDiscardCard(gameState.currentPlayer, card.id)
-                );
-                if (discardable) {
-                  handleDiscardCard(discardable.id);
+                if (discardableCards[i]) {
+                  handleDiscardCard(discardableCards[i].id);
                 }
               }
             }
+            // If already at 6 or fewer cards, phase will auto-advance
           }}
+          disabled={!canDiscardMore}
         >
-          <Text style={phaseStyles.confirmButtonText}>Done Discarding</Text>
+          <Text style={phaseStyles.confirmButtonText}>
+            {needToDiscard > 0 ? `Auto‑Discard ${needToDiscard}` : 'Done Discarding'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
