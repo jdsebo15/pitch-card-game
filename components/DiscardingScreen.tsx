@@ -46,15 +46,19 @@ export function DiscardingScreen({
     // Already discarded enough
     if (cardsDiscarded >= cardsToDiscard) return false;
     
-    // Can't discard trump unless you have all trumps
-    // (This is a simplified check - full logic is in game state)
-    if (isPointCard(card)) return false;
-
-    if (isTrump(card)) {
+    const cardIsTrump = isTrump(card);
+    const isPoint = isPointCard(card);
+    
+    // Can't discard trump point cards
+    if (cardIsTrump && isPoint) return false;
+    
+    // Can only discard trump if you have more than 6 trump cards
+    if (cardIsTrump) {
       const trumpCount = playerHand.filter(isTrump).length;
       if (trumpCount <= 6) return false;
     }
 
+    // Non-trump point cards CAN be discarded
     return true;
   };
   
@@ -75,14 +79,17 @@ export function DiscardingScreen({
   };
   
   const getCardStatus = (card: GameCard): string => {
-    if (isTrump(card)) {
-      if (isPointCard(card)) {
-        return isOffJack(card, trumpSuit === 'joker' ? null : trumpSuit) ? 'Off-Jack (Cannot Discard)' : 'Trump Point Card (Cannot Discard)';
-      }
+    const cardIsTrump = isTrump(card);
+    const isPoint = isPointCard(card);
+    
+    if (cardIsTrump && isPoint) {
+      return isOffJack(card, trumpSuit === 'joker' ? null : trumpSuit) ? 'Off-Jack (Cannot Discard)' : 'Trump Point Card (Cannot Discard)';
+    }
+    if (cardIsTrump) {
       return 'Trump Card';
     }
-    if (isPointCard(card)) {
-      return 'Point Card';
+    if (isPoint) {
+      return 'Point Card (Can Discard)';
     }
     return 'Safe to Discard';
   };
@@ -197,7 +204,7 @@ export function DiscardingScreen({
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🎯</Text>
-            <Text style={styles.ruleText}>Point cards (A, J, 10, 3, 2, jokers) cannot be discarded</Text>
+            <Text style={styles.ruleText}>Trump point cards cannot be discarded (A/J/2/10/3 of trump, jokers, off-jack)</Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🔄</Text>
