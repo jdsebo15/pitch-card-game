@@ -54,7 +54,8 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fon
     return (
       <View style={[styles.card, { width, height }]}>
         <View style={styles.cardCenter}>
-          <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize }]}>🃏</Text>
+          <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize, marginBottom: -20 }]}>🃏</Text>
+          <Text style={[styles.centerRank, { color: suitColors[suit], fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
         </View>
       </View>
     );
