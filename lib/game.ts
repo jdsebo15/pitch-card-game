@@ -202,3 +202,34 @@ export function getCardPoints(card: GameCard, trumpSuit: Suit): number {
 export function calculatePoints(trick: Trick, trumpSuit: Suit): number {
   return trick.cards.reduce((sum, { card }) => sum + getCardPoints(card, trumpSuit), 0);
 }
+
+export function sortCards(cards: GameCard[], trumpSuit: Suit | null): GameCard[] {
+  const suitOrder: Record<Suit, number> = {
+    joker: 0,          // jokers first
+    hearts: 1,
+    diamonds: 2,
+    clubs: 3,
+    spades: 4,
+  };
+  
+  const rankOrder: Record<Rank, number> = {
+    'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2,
+    'big': 15, 'little': 14.5, // jokers
+  };
+  
+  return [...cards].sort((a, b) => {
+    // If trump suit is set, trump suit comes first (except jokers)
+    if (trumpSuit && a.suit !== 'joker' && b.suit !== 'joker') {
+      if (a.suit === trumpSuit && b.suit !== trumpSuit) return -1;
+      if (a.suit !== trumpSuit && b.suit === trumpSuit) return 1;
+    }
+    
+    // Then by suit order
+    if (suitOrder[a.suit] !== suitOrder[b.suit]) {
+      return suitOrder[a.suit] - suitOrder[b.suit];
+    }
+    
+    // Then by rank (high to low)
+    return rankOrder[b.rank] - rankOrder[a.rank];
+  });
+}

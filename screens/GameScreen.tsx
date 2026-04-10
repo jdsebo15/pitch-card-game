@@ -8,7 +8,7 @@ import { BidderHandSelectionScreen } from '../components/bidderhandselectionscre
 import { DebugOverlay } from '../components/debugoverlay';
 import { Card } from '../components/Card';
 import { PitchGame } from '../lib/gameState';
-import { GameCard, Suit } from '../lib/game';
+import { GameCard, Suit, sortCards } from '../lib/game';
 
 export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   const [game, setGame] = useState<PitchGame>(new PitchGame());
@@ -196,7 +196,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
           </Text>
           
           <View style={styles.handCards}>
-            {currentPlayer.hand.map((card) => (
+            {sortCards(currentPlayer.hand, gameState.trumpSuit).map((card) => (
               <TouchableOpacity
                 key={card.id}
                 style={[

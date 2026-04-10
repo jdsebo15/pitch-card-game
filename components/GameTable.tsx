@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
 import { Card } from './Card';
-import { GameCard } from '../lib/game';
+import { GameCard, sortCards, Suit } from '../lib/game';
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,13 +63,14 @@ function PlayerBadge({
 }
 
 /** Fanned face‑up cards for North/top — horizontal fan */
-function HorizontalFanFaceUp({ cards }: { cards: GameCard[] }) {
-  const show = Math.min(cards.length, 9);
+function HorizontalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?: Suit | null }) {
+  const sorted = sortCards(cards, trumpSuit || null);
+  const show = Math.min(sorted.length, 9);
   const overlap = 18;
   const totalW = CARD_W + (show - 1) * (CARD_W - overlap);
   return (
     <View style={{ width: totalW, height: CARD_H, position: 'relative' }}>
-      {cards.slice(0, show).map((card, i) => (
+      {sorted.slice(0, show).map((card, i) => (
         <View key={i} style={{ position: 'absolute', left: i * (CARD_W - overlap) }}>
           <Card suit={card.suit} rank={card.rank} faceUp={true} width={CARD_W} height={CARD_H} />
         </View>
@@ -79,13 +80,14 @@ function HorizontalFanFaceUp({ cards }: { cards: GameCard[] }) {
 }
 
 /** Fanned face‑up cards for West/left — vertical fan */
-function VerticalFanFaceUp({ cards }: { cards: GameCard[] }) {
-  const show = Math.min(cards.length, 8);
+function VerticalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?: Suit | null }) {
+  const sorted = sortCards(cards, trumpSuit || null);
+  const show = Math.min(sorted.length, 8);
   const overlap = 16;
   const totalH = SIDE_CARD_H + (show - 1) * (SIDE_CARD_H - overlap);
   return (
     <View style={{ width: SIDE_CARD_W, height: totalH, position: 'relative' }}>
-      {cards.slice(0, show).map((card, i) => (
+      {sorted.slice(0, show).map((card, i) => (
         <View key={i} style={{ position: 'absolute', top: i * (SIDE_CARD_H - overlap) }}>
           <Card suit={card.suit} rank={card.rank} faceUp={true} width={SIDE_CARD_W} height={SIDE_CARD_H} />
         </View>
@@ -160,7 +162,7 @@ export function GameTable({
           <View style={styles.northArea}>
             <PlayerBadge player={north} />
             <View style={{ marginTop: 8 }}>
-              <HorizontalFanFaceUp cards={playerHands[north.id] || []} />
+              <HorizontalFanFaceUp cards={playerHands[north.id] || []} trumpSuit={trumpSuit} />
             </View>
           </View>
         )}
@@ -168,7 +170,7 @@ export function GameTable({
         {/* ── WEST ── */}
         {west && (
           <View style={styles.westArea}>
-            <VerticalFanFaceUp cards={playerHands[west.id] || []} />
+            <VerticalFanFaceUp cards={playerHands[west.id] || []} trumpSuit={trumpSuit} />
             <PlayerBadge player={west} align="flex-start" />
           </View>
         )}
@@ -176,7 +178,7 @@ export function GameTable({
         {/* ── EAST ── */}
         {east && (
           <View style={styles.eastArea}>
-            <VerticalFanFaceUp cards={playerHands[east.id] || []} />
+            <VerticalFanFaceUp cards={playerHands[east.id] || []} trumpSuit={trumpSuit} />
             <PlayerBadge player={east} align="flex-end" />
           </View>
         )}
