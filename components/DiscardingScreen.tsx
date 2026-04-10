@@ -47,12 +47,9 @@ export function DiscardingScreen({
     const isPoint = isPointCard(card);
     const trumpCount = playerHand.filter(isTrump).length;
 
-    console.log(`[canDiscard] ${card.rank}${card.suit} | trump=${cardIsTrump} point=${isPoint} trumpCount=${trumpCount}`);
+    if (cardIsTrump && isPoint) return false;
+    if (cardIsTrump && trumpCount <= 6) return false;
 
-    if (cardIsTrump && isPoint) { console.log('  -> BLOCKED: trump point card'); return false; }
-    if (cardIsTrump && trumpCount <= 6) { console.log('  -> BLOCKED: trump count <= 6'); return false; }
-
-    console.log('  -> ALLOWED');
     return true;
   };
   
@@ -227,7 +224,7 @@ export function DiscardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ff69b4',
+    backgroundColor: '#1a202c',
     padding: 20,
   },
   header: {

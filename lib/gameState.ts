@@ -156,9 +156,10 @@ export class PitchGame {
     return true;
   }
 
-  // Discard cards (3 cards to discard from 9 to get to 6)
+  // Discard cards — only the bidder discards in Pitch
   discardCard(playerId: string, cardId: string): boolean {
     if (this.state.phase !== 'discarding') return false;
+    if (this.state.bidder !== playerId) return false; // only bidder discards
     if (this.state.currentPlayer !== playerId) return false;
     
     const player = this.state.players.find(p => p.id === playerId);
@@ -178,20 +179,10 @@ export class PitchGame {
     player.hand.splice(cardIndex, 1);
     this.discards.get(playerId)!.push(card);
     
-    // Check if player has discarded enough (3 cards)
+    // After bidder discards 3, move to selecting-kitty
     const playerDiscards = this.discards.get(playerId)!.length;
     if (playerDiscards >= 3) {
-      // Player has discarded enough, move to next player
-      this.advancePlayer();
-      
-      // Check if all players have discarded
-      const allDiscarded = this.state.players.every(p => 
-        this.discards.get(p.id)!.length >= 3
-      );
-      
-      if (allDiscarded) {
-        this.completeDiscardingPhase();
-      }
+      this.completeDiscardingPhase();
     }
     
     return true;

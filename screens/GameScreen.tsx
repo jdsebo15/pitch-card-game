@@ -191,18 +191,27 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     );
   }
 
-  // Render discarding phase
+  // Render discarding phase — only the bidder discards
   if (gameState.phase === 'discarding') {
+    if (gameState.bidder === 'player-1') {
+      return (
+        <DiscardingScreen
+          playerHand={player.hand}
+          trumpSuit={gameState.trumpSuit}
+          currentPlayer={gameState.currentPlayer}
+          playerName={currentPlayer.name}
+          discards={game.getDiscards('player-1')}
+          onDiscardCard={handleDiscardCard}
+          onComplete={() => {}}
+        />
+      );
+    }
+    // AI is the bidder — show waiting screen (AI move fires via useEffect)
     return (
-      <DiscardingScreen
-        playerHand={player.hand}
-        trumpSuit={gameState.trumpSuit}
-        currentPlayer={gameState.currentPlayer}
-        playerName={currentPlayer.name}
-        discards={game.getDiscards('player-1')}
-        onDiscardCard={handleDiscardCard}
-        onComplete={() => {}}
-      />
+      <View style={styles.centeredPhaseScreen}>
+        <Text style={styles.phaseTitle}>Discarding</Text>
+        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to discard...</Text>
+      </View>
     );
   }
 
