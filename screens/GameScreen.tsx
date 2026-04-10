@@ -1,0 +1,309 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { GameTable } from '../components/GameTable';
+import { BiddingScreen } from '../components/BiddingScreen';
+import { Card } from '../components/Card';
+import { PitchGame } from '../lib/gameState';
+import { GameCard } from '../lib/game';
+
+export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
+  const [game, setGame] = useState<PitchGame>(new PitchGame());
+  const [gameState, setGameState] = useState(game.getState());
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  
+  const player = gameState.players.find(p => p.id === 'player-1')!;
+  const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer)!;
+  
+  const playerPositions = gameState.players.map((p, index) => ({
+    id: p.id,
+    name: p.name,
+    handCount: p.hand.length,
+    isCurrent: p.id === gameState.currentPlayer,
+    position: (index === 0 ? 'bottom' : index === 1 ? 'top' : index === 2 ? 'right' : 'left') as 'top' | 'right' | 'bottom' | 'left',
+    score: gameState.scores[p.id] || 0,
+    isBidder: p.id === gameState.bidder,
+  }));
+  
+  const currentTrick = gameState.tricks[gameState.tricks.length - 1];
+  const centerCards = currentTrick?.cards || [];
+  
+  const updateGameState = useCallback(() => {
+    const newState = game.getState();
+    setGameState(newState);
+    
+    // Check if game is over
+    if (game.isGameOver()) {
+      const winner = game.getWinner();
+      if (winner) {
+        Alert.alert(
+          'Game Over!',
+          `${gameState.players.find(p => p.id === winner.playerId)?.name} wins with ${winner.score} points!`,
+          [
+            { text: 'New Game', onPress: () => setGame(new PitchGame()) },
+            { text: 'Main Menu', onPress: onGameEnd },
+          ]
+        );
+      }
+    }
+  }, [game, gameState.players, onGameEnd]);
+  
+  useEffect(() => {
+    updateGameState();
+    
+    // AI turn handling
+    if (!currentPlayer.isHuman && gameState.phase !== 'scoring') {
+      const timer = setTimeout(() => {
+        game.makeAIMove(currentPlayer.id);
+        updateGameState();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentPlayer, gameState.phase, game, updateGameState]);
+  
+  const handlePlaceBid = (bid: number) => {
+    const success = game.placeBid('player-1', bid);
+    if (success) {
+      updateGameState();
+    }
+  };
+  
+  const handlePass = () => {
+    // Pass is represented as bid 0
+    const success = game.placeBid('player-1', 0);
+    if (success) {
+      updateGameState();
+    }
+  };
+  
+  const handlePlayCard = (cardId: string) => {
+    if (gameState.currentPlayer !== 'player-1') return;
+    
+    const success = game.playCard('player-1', cardId);
+    if (success) {
+      setSelectedCard(null);
+      updateGameState();
+    }
+  };
+  
+  const handleCardSelect = (cardId: string) => {
+    if (gameState.currentPlayer !== 'player-1' || gameState.phase !== 'playing') return;
+    setSelectedCard(cardId === selectedCard ? null : cardId);
+  };
+  
+  const handlePlaySelectedCard = () => {
+    if (selectedCard) {
+      handlePlayCard(selectedCard);
+    }
+  };
+  
+  // Render bidding phase
+  if (gameState.phase === 'bidding') {
+    return (
+      <BiddingScreen
+        playerHand={player.hand}
+        currentBid={gameState.bid}
+        currentPlayer={gameState.currentPlayer}
+        playerName={currentPlayer.name}
+        onPlaceBid={handlePlaceBid}
+        onPass={handlePass}
+      />
+    );
+  }
+  
+  // Render playing phase
+  return (
+    <View style={styles.container}>
+      <GameTable
+        players={playerPositions}
+        centerCards={centerCards}
+        trumpSuit={gameState.trumpSuit}
+        currentBid={gameState.bid}
+      />
+      
+      {/* Player hand */}
+      <View style={styles.playerHandContainer}>
+        <Text style={styles.handTitle}>
+          Your Hand • {player.hand.length} cards • Turn: {currentPlayer.name}
+        </Text>
+        
+        <View style={styles.handCards}>
+          {player.hand.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={[
+                styles.cardTouchable,
+                selectedCard === card.id && styles.cardSelected,
+              ]}
+              onPress={() => handleCardSelect(card.id)}
+              disabled={gameState.currentPlayer !== 'player-1'}
+            >
+              <Card
+                suit={card.suit}
+                rank={card.rank}
+                width={70}
+                height={98}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Play button */}
+        {gameState.currentPlayer === 'player-1' && selectedCard && (
+          <TouchableOpacity
+            style={styles.playButton}
+            onPress={handlePlaySelectedCard}
+          >
+            <Text style={styles.playButtonText}>Play Selected Card</Text>
+          </TouchableOpacity>
+        )}
+        
+        {gameState.currentPlayer !== 'player-1' && (
+          <Text style={styles.waitingText}>
+            Waiting for {currentPlayer.name} to play...
+          </Text>
+        )}
+      </View>
+      
+      {/* Game info */}
+      <View style={styles.gameInfo}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Phase:</Text>
+          <Text style={styles.infoValue}>
+            {gameState.phase === 'playing' ? 'Playing' : 'Scoring'}
+          </Text>
+        </View>
+        
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Trump:</Text>
+          <Text style={styles.infoValue}>
+            {gameState.trumpSuit ? 
+              (gameState.trumpSuit === 'hearts' ? '♥ Hearts' :
+               gameState.trumpSuit === 'diamonds' ? '♦ Diamonds' :
+               gameState.trumpSuit === 'clubs' ? '♣ Clubs' : '♠ Spades') : 
+              'Not set'}
+          </Text>
+        </View>
+        
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Bid:</Text>
+          <Text style={styles.infoValue}>
+            {gameState.bid !== null ? `${gameState.bid} by ${gameState.players.find(p => p.id === gameState.bidder)?.name}` : 'None'}
+          </Text>
+        </View>
+        
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Tricks:</Text>
+          <Text style={styles.infoValue}>
+            {gameState.tricks.filter(t => t.winner).length} completed
+          </Text>
+        </View>
+      </View>
+      
+      {/* Menu button */}
+      <TouchableOpacity style={styles.menuButton} onPress={onGameEnd}>
+        <Text style={styles.menuButtonText}>Menu</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1a202c',
+  },
+  playerHandContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  handTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  handCards: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  cardTouchable: {
+    marginHorizontal: 4,
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  cardSelected: {
+    transform: [{ translateY: -10 }],
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  playButton: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  playButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  waitingText: {
+    color: '#f59e0b',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  gameInfo: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: 12,
+    borderRadius: 12,
+    minWidth: 180,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  infoLabel: {
+    color: '#a0aec0',
+    fontSize: 14,
+  },
+  infoValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  menuButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});
