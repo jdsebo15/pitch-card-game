@@ -536,8 +536,8 @@ const phaseStyles = StyleSheet.create({
   },
   suitRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
+    justifyContent: 'space-evenly',
+    width: '100%',
     marginBottom: 20,
   },
   suitButton: {
