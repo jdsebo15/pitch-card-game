@@ -12,6 +12,7 @@ export interface Player {
   name: string;
   hand: GameCard[];
   isHuman: boolean;
+  team: number; // 0 or 1
 }
 
 export interface Trick {
@@ -28,7 +29,10 @@ export interface GameState {
   bidder: string | null;
   tricks: Trick[];
   scores: Record<string, number>;
+  teamScores: Record<number, number>;
   phase: 'bidding' | 'discarding' | 'playing' | 'scoring';
+  dealer: string;
+  forcedBid: boolean;
 }
 
 export function createDeck(): GameCard[] {

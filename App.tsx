@@ -23,21 +23,30 @@ export default function App() {
                 Pitch is a trick-taking card game for 2-4 players. Each player is dealt 6 cards from a standard 52-card deck.
               </Text>
               
+              <Text style={styles.rulesSection}>👥 Teams</Text>
+              <Text style={styles.rulesText}>
+                • Players across from each other are partners (Team 0 vs Team 1){'\n'}
+                • Dealer rotates each hand{'\n'}
+                • Bidding starts to the left of the dealer
+              </Text>
+              
               <Text style={styles.rulesSection}>💰 Bidding</Text>
               <Text style={styles.rulesText}>
-                Each player is dealt 9 cards. Bidding starts to the left of the dealer.{'\n'}
-                Minimum bid is 5 points. Players bid on how many points they think they can take.{'\n'}
-                The highest bidder chooses the trump suit.
+                Each player is dealt 9 cards.{'\n'}
+                Minimum bid is 5 points (up to 10).{'\n'}
+                If everyone passes, dealer is forced to bid 5.{'\n'}
+                Highest bidder chooses trump suit.
               </Text>
               
               <Text style={styles.rulesSection}>🗑️ Discarding Phase</Text>
               <Text style={styles.rulesText}>
                 After trump is chosen, each player discards 3 cards:{'\n'}
-                • Cannot discard trump unless you have ALL trumps{'\n'}
+                • Discard cards that are not trumps to get down to 6 cards{'\n'}
+                • If you have more than 6 trump cards, may discard trumps that are not worth points{'\n'}
                 • Point cards (A, J, 10, 3, 2, jokers) cannot be discarded{'\n'}
-                • If you have all point cards, must pass one to left player{'\n'}
-                • After discarding, players are dealt back to 6 cards{'\n'}
-                • Bidder gets remaining cards (kitty) after discarding
+                • If you have more than 6 point cards, must pass one to left player{'\n'}
+                • All leftover cards go to bidder (kitty){'\n'}
+                • Bidder selects best 6 cards from their 9 + kitty
               </Text>
               
               <Text style={styles.rulesSection}>🎯 Point Values (Catch Order)</Text>
@@ -58,7 +67,19 @@ export default function App() {
               
               <Text style={styles.rulesSection}>🃏 Game Play</Text>
               <Text style={styles.rulesText}>
-                The bidder leads the first trick. Players must follow suit if possible. The highest card of the led suit wins, unless a trump card is played.
+                • Bidder leads first trick{'\n'}
+                • Players must follow suit if possible{'\n'}
+                • Highest card of led suit wins, unless trump is played{'\n'}
+                • 6 tricks are played (each player starts with 6 cards)
+              </Text>
+              
+              <Text style={styles.rulesSection}>🏆 Scoring</Text>
+              <Text style={styles.rulesText}>
+                • If bidder's team collects enough points to cover their bid:{'\n'}
+                  - They get that number of points{'\n'}
+                • If bidder's team gets less than the bid:{'\n'}
+                  - They lose the number of points equivalent to the bid{'\n'}
+                • The other team gets the points that they collect
               </Text>
               
               <Text style={styles.rulesSection}>🏆 Winning</Text>

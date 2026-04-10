@@ -22,7 +22,9 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     isCurrent: p.id === gameState.currentPlayer,
     position: (index === 0 ? 'bottom' : index === 1 ? 'top' : index === 2 ? 'right' : 'left') as 'top' | 'right' | 'bottom' | 'left',
     score: gameState.scores[p.id] || 0,
+    team: p.team,
     isBidder: p.id === gameState.bidder,
+    isDealer: p.id === gameState.dealer,
   }));
   
   const currentTrick = gameState.tricks[gameState.tricks.length - 1];
@@ -142,6 +144,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         centerCards={centerCards}
         trumpSuit={gameState.trumpSuit}
         currentBid={gameState.bid}
+        teamScores={gameState.teamScores}
       />
       
       {/* Player hand */}

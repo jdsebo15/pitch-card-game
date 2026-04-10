@@ -12,7 +12,9 @@ interface PlayerPosition {
   isCurrent: boolean;
   position: 'top' | 'right' | 'bottom' | 'left';
   score: number;
+  team: number;
   isBidder?: boolean;
+  isDealer?: boolean;
 }
 
 interface GameTableProps {
@@ -20,9 +22,10 @@ interface GameTableProps {
   centerCards?: Array<{ card: GameCard; playerId: string }>;
   trumpSuit?: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker' | null;
   currentBid?: number | null;
+  teamScores?: Record<number, number>;
 }
 
-export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: GameTableProps) {
+export function GameTable({ players, centerCards = [], trumpSuit, currentBid, teamScores = {0: 0, 1: 0} }: GameTableProps) {
   const getPositionStyle = (position: 'top' | 'right' | 'bottom' | 'left') => {
     switch (position) {
       case 'top':
@@ -78,6 +81,16 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: 
           </View>
         )}
         
+        {/* Team scores */}
+        <View style={styles.teamScoresContainer}>
+          <View style={[styles.teamScore, styles.team0Score]}>
+            <Text style={styles.teamScoreText}>Team 0: {teamScores[0]}</Text>
+          </View>
+          <View style={[styles.teamScore, styles.team1Score]}>
+            <Text style={styles.teamScoreText}>Team 1: {teamScores[1]}</Text>
+          </View>
+        </View>
+        
         {/* Center cards (trick) */}
         <View style={styles.centerArea}>
           {centerCards.map(({ card, playerId }, index) => {
@@ -113,12 +126,18 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: 
             <View style={[
               styles.playerInfo,
               player.isCurrent && styles.currentPlayer,
-              player.isBidder && styles.bidderPlayer
+              player.isBidder && styles.bidderPlayer,
+              player.team === 0 && styles.team0,
+              player.team === 1 && styles.team1
             ]}>
-              <Text style={styles.playerName}>{player.name}</Text>
+              <Text style={styles.playerName}>
+                {player.name}
+                {player.isDealer && ' (D)'}
+              </Text>
               <Text style={styles.playerStats}>
                 {player.handCount} cards • {player.score} pts
                 {player.isBidder && ' • Bidder'}
+                {player.isDealer && ' • Dealer'}
               </Text>
               
               {/* Hand count indicator */}
@@ -266,6 +285,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#f59e0b',
   },
+  team0: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  team1: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
   playerName: {
     color: '#fff',
     fontSize: 16,
@@ -303,5 +328,32 @@ const styles = StyleSheet.create({
     color: '#10b981',
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  teamScoresContainer: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    flexDirection: 'column',
+    gap: 8,
+  },
+  teamScore: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  team0Score: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  team1Score: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  teamScoreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
