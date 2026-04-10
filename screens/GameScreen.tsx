@@ -116,7 +116,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
             ]}>
               {suit === 'hearts' ? '♥' : suit === 'diamonds' ? '♦' : suit === 'clubs' ? '♣' : '♠'}
             </Text>
-            <Text style={phaseStyles.suitLabel}>{suit}</Text>
+
           </TouchableOpacity>
         ))}
       </View>
@@ -552,11 +552,7 @@ const phaseStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  suitLabel: {
-    color: '#fff',
-    fontSize: 14,
-    textTransform: 'capitalize',
-  },
+
   handPreview: {
     flexDirection: 'row',
     flexWrap: 'wrap',
