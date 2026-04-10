@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
   gameInfo: {
     position: 'absolute',
-    top: 20,
+    top: 60,
     left: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     padding: 12,
