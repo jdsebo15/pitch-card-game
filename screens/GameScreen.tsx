@@ -243,7 +243,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       {/* Player hand */}
       <View style={styles.playerHandContainer}>
         <Text style={styles.handTitle}>
-          Your Hand • {player.hand.length} cards • Turn: {currentPlayer.name}
+          {gameState.currentPlayer === 'player-1' ? '🟢 Your turn' : `⏳ ${currentPlayer.name}'s turn`} • {player.hand.length} cards
         </Text>
         
         <View style={styles.handCards}>

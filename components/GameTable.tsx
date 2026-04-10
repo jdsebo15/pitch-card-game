@@ -5,6 +5,14 @@ import { GameCard } from '../lib/game';
 
 const { width, height } = Dimensions.get('window');
 
+// Card dimensions
+const CARD_W = 56;
+const CARD_H = 80;
+const SIDE_CARD_W = 44;
+const SIDE_CARD_H = 62;
+const CENTER_CARD_W = 70;
+const CENTER_CARD_H = 98;
+
 interface PlayerPosition {
   id: string;
   name: string;
@@ -26,364 +34,359 @@ interface GameTableProps {
   teamScores?: Record<number, number>;
 }
 
-export function GameTable({ players, playerHands = {}, centerCards = [], trumpSuit, currentBid, teamScores = {0: 0, 1: 0} }: GameTableProps) {
-  const getPositionStyle = (position: 'top' | 'right' | 'bottom' | 'left') => {
-    switch (position) {
-      case 'top':
-        return { top: 50, left: width / 2 - 60, alignItems: 'center' as const };
-      case 'right':
-        return { top: height / 2 - 40, right: 20, alignItems: 'flex-end' as const };
-      case 'bottom':
-        return { bottom: 100, left: width / 2 - 60, alignItems: 'center' as const };
-      case 'left':
-        return { top: height / 2 - 40, left: 20, alignItems: 'flex-start' as const };
-    }
-  };
-
-  const getCardPosition = (index: number, total: number) => {
-    const angle = (index / total) * Math.PI * 2;
-    const radius = 80;
-    return {
-      left: Math.cos(angle) * radius + (width / 2 - 50),
-      top: Math.sin(angle) * radius + (height / 2 - 70),
-    };
-  };
-  
-  const getPlayerColor = (playerId: string): string => {
-    switch (playerId) {
-      case 'player-1': return '#10b981'; // green - You
-      case 'player-2': return '#3b82f6'; // blue - North
-      case 'player-3': return '#ef4444'; // red - East
-      case 'player-4': return '#f59e0b'; // yellow - West
-      default: return '#9ca3af';
-    }
-  };
-
+function PlayerBadge({
+  player,
+  align = 'center',
+}: {
+  player: PlayerPosition;
+  align?: 'center' | 'flex-start' | 'flex-end';
+}) {
+  const teamColor = player.team === 0 ? '#10b981' : '#3b82f6';
   return (
-    <View style={styles.container}>
-      {/* Game table surface */}
-      <View style={styles.table}>
-        {/* Trump indicator */}
-        {trumpSuit && (
-          <View style={styles.trumpIndicator}>
-            <Text style={styles.trumpText}>Trump: </Text>
-            <View style={styles.trumpSuit}>
-              <Text style={[styles.trumpSuitText, { color: trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : trumpSuit === 'joker' ? '#7c3aed' : '#000' }]}>
-                {trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : trumpSuit === 'spades' ? '♠' : '🃏'}
-              </Text>
-            </View>
-          </View>
-        )}
-        
-        {/* Current bid */}
-        {currentBid !== null && (
-          <View style={styles.bidIndicator}>
-            <Text style={styles.bidText}>Bid: {currentBid}</Text>
-          </View>
-        )}
-        
-        {/* Team scores */}
-        <View style={styles.teamScoresContainer}>
-          <View style={[styles.teamScore, styles.team0Score]}>
-            <Text style={styles.teamScoreText}>Team 0: {teamScores[0]}</Text>
-          </View>
-          <View style={[styles.teamScore, styles.team1Score]}>
-            <Text style={styles.teamScoreText}>Team 1: {teamScores[1]}</Text>
-          </View>
-        </View>
-        
-        {/* Center cards (trick) */}
-        <View style={styles.centerArea}>
-          {centerCards.map(({ card, playerId }, index) => {
-            const position = getCardPosition(index, centerCards.length);
-            const player = players.find(p => p.id === playerId);
-            const playerColor = getPlayerColor(playerId);
-            return (
-              <View key={`${card.id}-${index}`} style={[styles.centerCard, position]}>
-                <View style={[styles.cardBorder, { borderColor: playerColor }]}>
-                  <Card suit={card.suit} rank={card.rank} width={80} height={112} />
-                </View>
-                {player && (
-                  <Text style={[styles.cardPlayerName, { color: playerColor }]}>{player.name}</Text>
-                )}
-              </View>
-            );
-          })}
-          
-          {/* Trick center marker */}
-          {centerCards.length === 0 && (
-            <View style={styles.trickCenter}>
-              <Text style={styles.trickCenterText}>Trick {centerCards.length > 0 ? 'in progress' : 'starts here'}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-      
-      {/* Player positions */}
-      {players.map((player) => {
-        const positionStyle = getPositionStyle(player.position);
-        return (
-          <View key={player.id} style={[styles.playerPosition, positionStyle]}>
-            <View style={[
-              styles.playerInfo,
-              player.isCurrent && styles.currentPlayer,
-              player.isBidder && styles.bidderPlayer,
-              player.team === 0 && styles.team0,
-              player.team === 1 && styles.team1
-            ]}>
-              <Text style={styles.playerName}>
-                {player.name}
-                {player.isDealer && ' (D)'}
-              </Text>
-              <Text style={styles.playerStats}>
-                {player.handCount} cards • {player.score} pts
-                {player.isBidder && ' • Bidder'}
-                {player.isDealer && ' • Dealer'}
-              </Text>
-              
-              {/* Hand representation */}
-              <View style={styles.handIndicator}>
-                {(() => {
-                  const hand = playerHands[player.id] || [];
-                  const cardsToShow = hand.slice(0, 4); // Show up to 4 cards
-                  
-                  return (
-                    <>
-                      {cardsToShow.map((card, i) => (
-                        <View key={i} style={[styles.cardMini, { marginLeft: i > 0 ? -12 : 0 }]}>
-                          <Card 
-                            suit={card.suit} 
-                            rank={card.rank} 
-                            width={30} 
-                            height={42} 
-                            fontSize={8}
-                          />
-                        </View>
-                      ))}
-                      {hand.length > 4 && (
-                        <Text style={styles.moreCards}>+{hand.length - 4}</Text>
-                      )}
-                      {hand.length === 0 && (
-                        <Text style={styles.noCards}>No cards</Text>
-                      )}
-                    </>
-                  );
-                })()}
-              </View>
-            </View>
-            
-            {player.isCurrent && (
-              <View style={styles.currentTurnIndicator}>
-                <Text style={styles.currentTurnText}>↑</Text>
-              </View>
-            )}
-          </View>
-        );
-      })}
+    <View style={[badgeStyles.badge, player.isCurrent && badgeStyles.active, { alignItems: align, borderColor: player.isCurrent ? '#6366f1' : teamColor }]}>
+      <Text style={badgeStyles.name}>
+        {player.name}
+        {player.isDealer ? ' 🃏' : ''}
+        {player.isBidder ? ' ⭐' : ''}
+      </Text>
+      <Text style={[badgeStyles.sub, { color: teamColor }]}>
+        {player.handCount} cards · {player.score} pts
+      </Text>
     </View>
   );
 }
 
+/** Fanned card backs for North/top — horizontal fan */
+function HorizontalFanBack({ count }: { count: number }) {
+  const show = Math.min(count, 9);
+  const overlap = 18;
+  const totalW = CARD_W + (show - 1) * (CARD_W - overlap);
+  return (
+    <View style={{ width: totalW, height: CARD_H, position: 'relative' }}>
+      {Array.from({ length: show }).map((_, i) => (
+        <View key={i} style={{ position: 'absolute', left: i * (CARD_W - overlap) }}>
+          <Card suit="spades" rank="A" faceUp={false} width={CARD_W} height={CARD_H} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Fanned card backs for West/left — vertical fan */
+function VerticalFanBack({ count }: { count: number }) {
+  const show = Math.min(count, 8);
+  const overlap = 16;
+  const totalH = SIDE_CARD_H + (show - 1) * (SIDE_CARD_H - overlap);
+  return (
+    <View style={{ width: SIDE_CARD_W, height: totalH, position: 'relative' }}>
+      {Array.from({ length: show }).map((_, i) => (
+        <View key={i} style={{ position: 'absolute', top: i * (SIDE_CARD_H - overlap) }}>
+          <Card suit="spades" rank="A" faceUp={false} width={SIDE_CARD_W} height={SIDE_CARD_H} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function TrumpBadge({ trumpSuit }: { trumpSuit: string }) {
+  const suitSymbol = trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : trumpSuit === 'spades' ? '♠' : '🃏';
+  const color = trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : trumpSuit === 'joker' ? '#7c3aed' : '#000';
+  return (
+    <View style={infoStyles.trumpBadge}>
+      <Text style={infoStyles.trumpLabel}>TRUMP</Text>
+      <Text style={[infoStyles.trumpSymbol, { color }]}>{suitSymbol}</Text>
+    </View>
+  );
+}
+
+export function GameTable({
+  players,
+  playerHands = {},
+  centerCards = [],
+  trumpSuit,
+  currentBid,
+  teamScores = { 0: 0, 1: 0 },
+}: GameTableProps) {
+  const north = players.find(p => p.position === 'top');
+  const south = players.find(p => p.position === 'bottom');
+  const west = players.find(p => p.position === 'left');
+  const east = players.find(p => p.position === 'right');
+
+  // Center trick cards — position relative to which player played
+  const getCardOffset = (playerId: string): { dx: number; dy: number } => {
+    const p = players.find(pl => pl.id === playerId);
+    if (!p) return { dx: 0, dy: 0 };
+    switch (p.position) {
+      case 'top': return { dx: 0, dy: -45 };
+      case 'bottom': return { dx: 0, dy: 45 };
+      case 'left': return { dx: -55, dy: 0 };
+      case 'right': return { dx: 55, dy: 0 };
+    }
+  };
+
+  return (
+    <View style={styles.root}>
+      {/* ── Green felt table ── */}
+      <View style={styles.felt}>
+
+        {/* ── Score / trump overlay (top-left corner of felt) ── */}
+        <View style={infoStyles.overlay}>
+          <View style={infoStyles.row}>
+            <View style={[infoStyles.teamChip, { borderColor: '#10b981' }]}>
+              <Text style={[infoStyles.teamLabel, { color: '#10b981' }]}>NS</Text>
+              <Text style={infoStyles.teamScore}>{teamScores[0]}</Text>
+            </View>
+            <View style={[infoStyles.teamChip, { borderColor: '#3b82f6' }]}>
+              <Text style={[infoStyles.teamLabel, { color: '#3b82f6' }]}>EW</Text>
+              <Text style={infoStyles.teamScore}>{teamScores[1]}</Text>
+            </View>
+          </View>
+          {trumpSuit && <TrumpBadge trumpSuit={trumpSuit} />}
+          {currentBid != null && (
+            <View style={infoStyles.bidChip}>
+              <Text style={infoStyles.bidText}>Bid: {currentBid}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* ── NORTH ── */}
+        {north && (
+          <View style={styles.northArea}>
+            <PlayerBadge player={north} />
+            <View style={{ marginTop: 8 }}>
+              <HorizontalFanBack count={north.handCount} />
+            </View>
+          </View>
+        )}
+
+        {/* ── WEST ── */}
+        {west && (
+          <View style={styles.westArea}>
+            <VerticalFanBack count={west.handCount} />
+            <PlayerBadge player={west} align="flex-start" />
+          </View>
+        )}
+
+        {/* ── EAST ── */}
+        {east && (
+          <View style={styles.eastArea}>
+            <VerticalFanBack count={east.handCount} />
+            <PlayerBadge player={east} align="flex-end" />
+          </View>
+        )}
+
+        {/* ── CENTER TRICK AREA ── */}
+        <View style={styles.centerArea}>
+          {centerCards.length === 0 ? (
+            <View style={styles.emptyCenter}>
+              <Text style={styles.emptyCenterText}>Play area</Text>
+            </View>
+          ) : (
+            centerCards.map(({ card, playerId }, i) => {
+              const { dx, dy } = getCardOffset(playerId);
+              const player = players.find(p => p.id === playerId);
+              const teamColor = player?.team === 0 ? '#10b981' : '#3b82f6';
+              return (
+                <View
+                  key={`${card.id}-${i}`}
+                  style={[
+                    styles.centerCard,
+                    { transform: [{ translateX: dx }, { translateY: dy }] },
+                  ]}
+                >
+                  <View style={[styles.centerCardBorder, { borderColor: teamColor }]}>
+                    <Card suit={card.suit} rank={card.rank} width={CENTER_CARD_W} height={CENTER_CARD_H} />
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </View>
+
+      </View>{/* end felt */}
+
+      {/* ── SOUTH badge (pinned to bottom of felt) ── */}
+      {south && (
+        <View style={styles.southArea}>
+          <PlayerBadge player={south} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+/* ─── styles ─── */
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#1a202c',
+    backgroundColor: '#111827',
   },
-  table: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#2d3748',
-    borderRadius: width * 0.5,
-    margin: 20,
-    borderWidth: 4,
-    borderColor: '#4a5568',
+  felt: {
+    flex: 1,
+    backgroundColor: '#166534',   // deep green felt
+    margin: 8,
+    borderRadius: 24,
+    borderWidth: 6,
+    borderColor: '#854d0e',        // wooden rail
+    // relative anchor for absolute children
+    position: 'relative',
+    overflow: 'hidden',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  /* ── player areas ── */
+  northArea: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
     alignItems: 'center',
   },
-  trumpIndicator: {
+  westArea: {
     position: 'absolute',
-    top: 20,
-    right: 20,
-    flexDirection: 'row',
+    left: 8,
+    top: '30%',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    gap: 8,
   },
-  trumpText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  trumpSuit: {
-    marginLeft: 4,
-  },
-  trumpSuitText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  bidIndicator: {
+  eastArea: {
     position: 'absolute',
-    top: 60,
-    right: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    right: 8,
+    top: '30%',
+    alignItems: 'center',
+    gap: 8,
   },
-  bidText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+  southArea: {
+    position: 'absolute',
+    bottom: 12,
+    alignSelf: 'center',
+    alignItems: 'center',
   },
+
+  /* ── center ── */
   centerArea: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    justifyContent: 'center',
+    width: 220,
+    height: 220,
     alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  emptyCenter: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyCenterText: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 13,
   },
   centerCard: {
     position: 'absolute',
-    alignItems: 'center',
   },
-  cardBorder: {
+  centerCardBorder: {
     borderWidth: 3,
-    borderRadius: 8,
+    borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 10,
   },
-  cardPlayerName: {
-    position: 'absolute',
-    bottom: -20,
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-    width: 80,
-  },
-  trickCenter: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(74, 85, 104, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4a5568',
-    borderStyle: 'dashed',
-  },
-  trickCenterText: {
-    color: '#a0aec0',
-    fontSize: 12,
-    textAlign: 'center',
-    paddingHorizontal: 10,
-  },
-  playerPosition: {
-    position: 'absolute',
-  },
-  playerInfo: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    minWidth: 120,
-  },
-  currentPlayer: {
-    backgroundColor: 'rgba(79, 70, 229, 0.9)',
-    borderWidth: 2,
-    borderColor: '#6366f1',
-  },
-  bidderPlayer: {
-    borderWidth: 2,
-    borderColor: '#f59e0b',
-  },
-  team0: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-  },
-  team1: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  playerName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  playerStats: {
-    color: '#cbd5e0',
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  handIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 30,
-  },
-  cardMini: {
-    borderRadius: 3,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  moreCards: {
-    color: '#fff',
-    fontSize: 10,
-    marginLeft: 4,
-    fontWeight: 'bold',
-  },
-  noCards: {
-    color: '#9ca3af',
-    fontSize: 10,
-    fontStyle: 'italic',
-  },
-  currentTurnIndicator: {
-    position: 'absolute',
-    top: -20,
-    alignSelf: 'center',
-  },
-  currentTurnText: {
-    color: '#10b981',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  teamScoresContainer: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    flexDirection: 'column',
-    gap: 8,
-  },
-  teamScore: {
+});
+
+/* ─── player badge styles ─── */
+const badgeStyles = StyleSheet.create({
+  badge: {
+    backgroundColor: 'rgba(0,0,0,0.65)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#4a5568',
+    minWidth: 110,
   },
-  team0Score: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 1,
-    borderColor: '#10b981',
+  active: {
+    backgroundColor: 'rgba(99,102,241,0.85)',
+    borderColor: '#818cf8',
   },
-  team1Score: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderWidth: 1,
-    borderColor: '#3b82f6',
-  },
-  teamScoreText: {
+  name: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  sub: {
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+});
+
+/* ─── score / trump info styles ─── */
+const infoStyles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    gap: 6,
+    zIndex: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  teamChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1.5,
+  },
+  teamLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  teamScore: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  trumpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  trumpLabel: {
+    color: '#d1d5db',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  trumpSymbol: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  bidChip: {
+    backgroundColor: 'rgba(79,70,229,0.8)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  bidText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
