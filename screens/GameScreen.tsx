@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView, Modal } from 'react-native';
 import { GameTable } from '../components/GameTable';
 import { BiddingScreen } from '../components/BiddingScreen';
 import { DiscardingScreen } from '../components/DiscardingScreen';
@@ -16,9 +16,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   
-  // In 4-human mode, always show the current player's hand
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer)!;
-  const player = currentPlayer; // alias — hand shown is always the active player's
   
   const playerPositions = gameState.players.map((p, index) => ({
     id: p.id,
@@ -55,32 +53,31 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   }, [game, gameState.players, onGameEnd]);
   
-  
   const handlePlaceBid = (bid: number) => {
     const success = game.placeBid(gameState.currentPlayer, bid);
     if (success) updateGameState();
   };
-
+  
   const handlePass = () => {
     const success = game.placeBid(gameState.currentPlayer, 0);
     if (success) updateGameState();
   };
-
+  
   const handleChooseTrump = (suit: Suit) => {
     const success = game.chooseTrump(gameState.currentPlayer, suit);
     if (success) updateGameState();
   };
-
+  
   const handleDiscardCard = (cardId: string) => {
     const success = game.discardCard(gameState.currentPlayer, cardId);
     if (success) updateGameState();
   };
-
+  
   const handleConfirmBidderHand = (cardIds: string[]) => {
     const success = game.confirmBidderHand(gameState.currentPlayer, cardIds);
     if (success) updateGameState();
   };
-
+  
   const handlePlayCard = (cardId: string) => {
     const success = game.playCard(gameState.currentPlayer, cardId);
     if (success) {
@@ -100,59 +97,72 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   };
   
-  // Render bidding phase — current player bids
-  if (gameState.phase === 'bidding') {
-    return (
-      <BiddingScreen
-        playerHand={currentPlayer.hand}
-        currentBid={gameState.bid}
-        currentPlayer={gameState.currentPlayer}
-        playerName={currentPlayer.name}
-        onPlaceBid={handlePlaceBid}
-        onPass={handlePass}
-      />
-    );
-  }
-
-  // Trump selection — bidder picks trump
-  if (gameState.phase === 'choosing-trump') {
-    return (
-      <TrumpSelectionScreen
-        playerHand={currentPlayer.hand}
-        forcedBid={gameState.forcedBid}
-        bid={gameState.bid}
-        onChooseTrump={handleChooseTrump}
-      />
-    );
-  }
-
-  // Discard phase — bidder discards 3
-  if (gameState.phase === 'discarding') {
-    return (
-      <DiscardingScreen
-        playerHand={currentPlayer.hand}
-        trumpSuit={gameState.trumpSuit}
-        currentPlayer={gameState.currentPlayer}
-        playerName={currentPlayer.name}
-        discards={game.getDiscards(gameState.currentPlayer)}
-        onDiscardCard={handleDiscardCard}
-        onComplete={() => {}}
-      />
-    );
-  }
-
-  // Kitty selection — bidder picks final 6
-  if (gameState.phase === 'selecting-kitty') {
-    return (
-      <BidderHandSelectionScreen
-        cards={game.getBidderPool()}
-        trumpSuit={gameState.trumpSuit}
-        onConfirm={handleConfirmBidderHand}
-      />
-    );
-  }
+  // ─── Overlay rendering ───
+  const renderBiddingOverlay = () => (
+    <Modal transparent visible={gameState.phase === 'bidding'} animationType="slide">
+      <View style={overlayStyles.backdrop}>
+        <View style={overlayStyles.modal}>
+          <BiddingScreen
+            playerHand={currentPlayer.hand}
+            currentBid={gameState.bid}
+            currentPlayer={gameState.currentPlayer}
+            playerName={currentPlayer.name}
+            onPlaceBid={handlePlaceBid}
+            onPass={handlePass}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
   
-  // Render playing phase
+  const renderTrumpOverlay = () => (
+    <Modal transparent visible={gameState.phase === 'choosing-trump'} animationType="slide">
+      <View style={overlayStyles.backdrop}>
+        <View style={overlayStyles.modal}>
+          <TrumpSelectionScreen
+            playerHand={currentPlayer.hand}
+            forcedBid={gameState.forcedBid}
+            bid={gameState.bid}
+            onChooseTrump={handleChooseTrump}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+  
+  const renderDiscardOverlay = () => (
+    <Modal transparent visible={gameState.phase === 'discarding'} animationType="slide">
+      <View style={overlayStyles.backdrop}>
+        <View style={overlayStyles.modal}>
+          <DiscardingScreen
+            playerHand={currentPlayer.hand}
+            trumpSuit={gameState.trumpSuit}
+            currentPlayer={gameState.currentPlayer}
+            playerName={currentPlayer.name}
+            discards={game.getDiscards(gameState.currentPlayer)}
+            onDiscardCard={handleDiscardCard}
+            onComplete={() => {}}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+  
+  const renderKittyOverlay = () => (
+    <Modal transparent visible={gameState.phase === 'selecting-kitty'} animationType="slide">
+      <View style={overlayStyles.backdrop}>
+        <View style={overlayStyles.modal}>
+          <BidderHandSelectionScreen
+            cards={game.getBidderPool()}
+            trumpSuit={gameState.trumpSuit}
+            onConfirm={handleConfirmBidderHand}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+  
+  // ─── Main table view ───
   return (
     <SafeAreaView style={styles.container}>
       <GameTable
@@ -167,44 +177,46 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         teamScores={gameState.teamScores}
       />
       
-      {/* Player hand */}
-      <View style={styles.playerHandContainer}>
-        <Text style={styles.handTitle}>
-          🟢 {currentPlayer.name}'s turn • {currentPlayer.hand.length} cards
-        </Text>
-        
-        <View style={styles.handCards}>
-          {currentPlayer.hand.map((card) => (
+      {/* Player hand (only in playing phase) */}
+      {gameState.phase === 'playing' && (
+        <View style={styles.playerHandContainer}>
+          <Text style={styles.handTitle}>
+            🟢 {currentPlayer.name}'s turn • {currentPlayer.hand.length} cards
+          </Text>
+          
+          <View style={styles.handCards}>
+            {currentPlayer.hand.map((card) => (
+              <TouchableOpacity
+                key={card.id}
+                style={[
+                  styles.cardTouchable,
+                  selectedCard === card.id && styles.cardSelected,
+                ]}
+                onPress={() => handleCardSelect(card.id)}
+              >
+                <Card
+                  suit={card.suit}
+                  rank={card.rank}
+                  width={70}
+                  height={98}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Play button */}
+          {selectedCard && (
             <TouchableOpacity
-              key={card.id}
-              style={[
-                styles.cardTouchable,
-                selectedCard === card.id && styles.cardSelected,
-              ]}
-              onPress={() => handleCardSelect(card.id)}
+              style={styles.playButton}
+              onPress={handlePlaySelectedCard}
             >
-              <Card
-                suit={card.suit}
-                rank={card.rank}
-                width={70}
-                height={98}
-              />
+              <Text style={styles.playButtonText}>Play Selected Card</Text>
             </TouchableOpacity>
-          ))}
+          )}
         </View>
-        
-        {/* Play button */}
-        {selectedCard && (
-          <TouchableOpacity
-            style={styles.playButton}
-            onPress={handlePlaySelectedCard}
-          >
-            <Text style={styles.playButtonText}>Play Selected Card</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      )}
       
-      {/* Game info */}
+      {/* Game info overlay (top-left) */}
       <View style={styles.gameInfo}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Phase:</Text>
@@ -250,6 +262,12 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       <TouchableOpacity style={styles.debugButton} onPress={() => setShowDebug(true)}>
         <Text style={styles.debugButtonText}>🔍</Text>
       </TouchableOpacity>
+      
+      {/* Overlays */}
+      {renderBiddingOverlay()}
+      {renderTrumpOverlay()}
+      {renderDiscardOverlay()}
+      {renderKittyOverlay()}
       
       {/* Debug overlay */}
       <DebugOverlay
@@ -321,12 +339,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  waitingText: {
-    color: '#f59e0b',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
   gameInfo: {
     position: 'absolute',
     top: 20,
@@ -335,21 +347,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     minWidth: 180,
-  },
-  centeredPhaseScreen: {
-    flex: 1,
-    backgroundColor: '#1a202c',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    paddingTop: 60,
-  },
-  phaseTitle: {
-    color: '#fff',
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
   },
   infoRow: {
     flexDirection: 'row',
@@ -394,5 +391,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+});
+
+const overlayStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modal: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#1a202c',
+    borderRadius: 20,
+    overflow: 'hidden',
+    maxHeight: '90%',
   },
 });
