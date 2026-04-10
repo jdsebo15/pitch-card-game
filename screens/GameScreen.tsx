@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   debugButton: {
     position: 'absolute',
     top: 60,
-    right: 80,
+    right: 100,
     backgroundColor: 'rgba(59, 130, 246, 0.8)',
     width: 36,
     height: 36,
