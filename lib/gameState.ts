@@ -2,6 +2,8 @@ import { Suit, Rank, GameCard, Player, Trick, GameState, createDeck, shuffleDeck
 
 export class PitchGame {
   private state: GameState;
+  private kitty: GameCard[] = [];
+  private discards: Map<string, GameCard[]> = new Map();
   
   constructor(numPlayers: number = 4) {
     this.state = this.initializeGame(numPlayers);
@@ -9,7 +11,7 @@ export class PitchGame {
   
   private initializeGame(numPlayers: number): GameState {
     const deck = shuffleDeck(createDeck());
-    const { hands, remainingDeck } = dealCards(deck, numPlayers);
+    const { hands, remainingDeck } = dealCards(deck, numPlayers, 9); // Deal 9 cards each
     
     const players: Player[] = [
       { id: 'player-1', name: 'You', hand: hands[0], isHuman: true },
@@ -17,6 +19,9 @@ export class PitchGame {
       { id: 'player-3', name: 'AI East', hand: hands[2], isHuman: false },
       { id: 'player-4', name: 'AI West', hand: hands[3], isHuman: false },
     ];
+    
+    // Initialize discards map
+    players.forEach(p => this.discards.set(p.id, []));
     
     return {
       players,
@@ -38,6 +43,72 @@ export class PitchGame {
   
   getState(): GameState {
     return { ...this.state };
+  }
+  
+  getKitty(): GameCard[] {
+    return [...this.kitty];
+  }
+  
+  getDiscards(playerId: string): GameCard[] {
+    return this.discards.get(playerId) || [];
+  }
+  
+  // Helper to check if a card is worth points
+  private isPointCard(card: GameCard): boolean {
+    if (!this.state.trumpSuit) return false;
+    
+    // Cards worth points in this variation:
+    // A, J of trump, big/little joker, off jack, 10, 3, 2
+    if (card.rank === 'A') return true;
+    if (card.suit === this.state.trumpSuit && card.rank === 'J') return true;
+    if (card.rank === 'big' || card.rank === 'little') return true;
+    if (card.rank === '10') return true;
+    if (card.rank === '3') return true;
+    if (card.rank === '2') return true;
+    
+    // Off jack (jack of same color as trump)
+    if (card.rank === 'J' && this.state.trumpSuit) {
+      const isSameColor = (
+        (this.state.trumpSuit === 'hearts' || this.state.trumpSuit === 'diamonds') && 
+        (card.suit === 'hearts' || card.suit === 'diamonds')
+      ) || (
+        (this.state.trumpSuit === 'clubs' || this.state.trumpSuit === 'spades') && 
+        (card.suit === 'clubs' || card.suit === 'spades')
+      );
+      
+      if (isSameColor && card.suit !== this.state.trumpSuit) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  // Check if player has all trumps
+  private hasAllTrumps(playerId: string): boolean {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !this.state.trumpSuit) return false;
+    
+    // Count trump cards in hand
+    const trumpCards = player.hand.filter(card => 
+      card.suit === this.state.trumpSuit || card.suit === 'joker'
+    );
+    
+    // Total possible trump cards: 13 of trump suit + 2 jokers = 15
+    // But in a 9-card hand, having 9 trumps means you have all trumps in your hand
+    return trumpCards.length === player.hand.length;
+  }
+  
+  // Check if player has all point cards
+  private hasAllPointCards(playerId: string): boolean {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player || !this.state.trumpSuit) return false;
+    
+    // Count point cards in hand
+    const pointCards = player.hand.filter(card => this.isPointCard(card));
+    
+    // If all cards in hand are point cards
+    return pointCards.length === player.hand.length;
   }
   
   placeBid(playerId: string, bid: number): boolean {
@@ -74,11 +145,140 @@ export class PitchGame {
       const bidder = this.state.players.find(p => p.id === this.state.bidder)!;
       const trumpSuit = bidder.hand[0]?.suit || 'hearts';
       this.state.trumpSuit = trumpSuit;
-      this.state.phase = 'playing';
+      
+      // Move to discarding phase
+      this.state.phase = 'discarding';
       this.state.currentPlayer = this.state.bidder;
     } else {
       // No one bid, redeal
       this.state = this.initializeGame(this.state.players.length);
+    }
+  }
+  
+  // Discard cards (3 cards to discard from 9 to get to 6)
+  discardCard(playerId: string, cardId: string): boolean {
+    if (this.state.phase !== 'discarding') return false;
+    if (this.state.currentPlayer !== playerId) return false;
+    
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) return false;
+    
+    const cardIndex = player.hand.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) return false;
+    
+    const card = player.hand[cardIndex];
+    
+    // Check discard rules
+    if (!this.canDiscardCard(playerId, card)) {
+      return false;
+    }
+    
+    // Move card to discards
+    player.hand.splice(cardIndex, 1);
+    this.discards.get(playerId)!.push(card);
+    
+    // Check if player has discarded enough (3 cards)
+    const playerDiscards = this.discards.get(playerId)!.length;
+    if (playerDiscards >= 3) {
+      // Player has discarded enough, move to next player
+      this.advancePlayer();
+      
+      // Check if all players have discarded
+      const allDiscarded = this.state.players.every(p => 
+        this.discards.get(p.id)!.length >= 3
+      );
+      
+      if (allDiscarded) {
+        this.completeDiscardingPhase();
+      }
+    }
+    
+    return true;
+  }
+  
+  private canDiscardCard(playerId: string, card: GameCard): boolean {
+    if (!this.state.trumpSuit) return false;
+    
+    const player = this.state.players.find(p => p.id === playerId)!;
+    
+    // Rule 1: Can't discard trump unless you have all trumps
+    const isTrump = card.suit === this.state.trumpSuit || card.suit === 'joker';
+    if (isTrump && !this.hasAllTrumps(playerId)) {
+      return false;
+    }
+    
+    // Rule 2: Trumps worth points can never be discarded
+    if (isTrump && this.isPointCard(card)) {
+      return false;
+    }
+    
+    // Rule 3: If you have all point cards, you must pass one to left
+    // (This is handled separately in the passing phase)
+    
+    return true;
+  }
+  
+  private completeDiscardingPhase() {
+    // Handle passing of point cards if someone has all point cards
+    this.handlePointCardPassing();
+    
+    // Deal cards from remaining deck to get players back to 6 cards
+    this.replenishHands();
+    
+    // Bidder gets the kitty (remaining cards after discards)
+    this.assignKitty();
+    
+    // Move to playing phase
+    this.state.phase = 'playing';
+    this.state.currentPlayer = this.state.bidder!;
+  }
+  
+  private handlePointCardPassing() {
+    if (!this.state.trumpSuit) return;
+    
+    for (const player of this.state.players) {
+      if (this.hasAllPointCards(player.id)) {
+        // Player has all point cards, must pass one to left
+        const leftPlayerIndex = (this.state.players.indexOf(player) + 1) % this.state.players.length;
+        const leftPlayer = this.state.players[leftPlayerIndex];
+        
+        // Find a point card to pass (prefer non-trump if possible)
+        const pointCardIndex = player.hand.findIndex(card => 
+          this.isPointCard(card) && (card.suit !== this.state.trumpSuit && card.suit !== 'joker')
+        );
+        
+        const cardToPassIndex = pointCardIndex >= 0 ? pointCardIndex : 
+          player.hand.findIndex(card => this.isPointCard(card));
+        
+        if (cardToPassIndex >= 0) {
+          const cardToPass = player.hand.splice(cardToPassIndex, 1)[0];
+          leftPlayer.hand.push(cardToPass);
+        }
+      }
+    }
+  }
+  
+  private replenishHands() {
+    // Each player should have 6 cards after discarding 3 from 9
+    const targetHandSize = 6;
+    
+    for (const player of this.state.players) {
+      while (player.hand.length < targetHandSize && this.state.deck.length > 0) {
+        player.hand.push(this.state.deck.pop()!);
+      }
+    }
+  }
+  
+  private assignKitty() {
+    // Bidder gets all remaining cards in the deck (kitty)
+    this.kitty = [...this.state.deck];
+    this.state.deck = [];
+    
+    // Add kitty to bidder's hand
+    const bidder = this.state.players.find(p => p.id === this.state.bidder!);
+    if (bidder) {
+      bidder.hand.push(...this.kitty);
+      this.kitty = [];
     }
   }
   
@@ -186,9 +386,41 @@ export class PitchGame {
   makeAIMove(playerId: string): void {
     if (this.state.phase === 'bidding') {
       this.makeAIBid(playerId);
+    } else if (this.state.phase === 'discarding') {
+      this.makeAIDiscard(playerId);
     } else if (this.state.phase === 'playing') {
       this.makeAIPlay(playerId);
     }
+  }
+  
+  private makeAIDiscard(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId)!;
+    
+    // AI discarding strategy:
+    // 1. Try to discard non-point, non-trump cards first
+    // 2. If must discard trump, discard lowest non-point trump
+    // 3. Keep point cards and high trump cards
+    
+    // Find discardable cards
+    const discardableCards = player.hand.filter(card => 
+      this.canDiscardCard(playerId, card)
+    );
+    
+    if (discardableCards.length === 0) {
+      // No discardable cards (shouldn't happen with proper rules)
+      return;
+    }
+    
+    // Sort by value (discard lowest value cards first)
+    discardableCards.sort((a, b) => {
+      const aValue = getCardValue(a, this.state.trumpSuit);
+      const bValue = getCardValue(b, this.state.trumpSuit);
+      return aValue - bValue;
+    });
+    
+    // Discard the lowest value discardable card
+    const cardToDiscard = discardableCards[0];
+    this.discardCard(playerId, cardToDiscard.id);
   }
   
   private makeAIBid(playerId: string): void {

@@ -28,7 +28,7 @@ export interface GameState {
   bidder: string | null;
   tricks: Trick[];
   scores: Record<string, number>;
-  phase: 'bidding' | 'playing' | 'scoring';
+  phase: 'bidding' | 'discarding' | 'playing' | 'scoring';
 }
 
 export function createDeck(): GameCard[] {
@@ -64,9 +64,8 @@ export function shuffleDeck(deck: GameCard[]): GameCard[] {
   return shuffled;
 }
 
-export function dealCards(deck: GameCard[], numPlayers: number): { hands: GameCard[][]; remainingDeck: GameCard[] } {
+export function dealCards(deck: GameCard[], numPlayers: number, cardsPerPlayer: number = 9): { hands: GameCard[][]; remainingDeck: GameCard[] } {
   const hands: GameCard[][] = Array.from({ length: numPlayers }, () => []);
-  const cardsPerPlayer = 6; // Standard Pitch deals 6 cards each
   
   for (let i = 0; i < cardsPerPlayer; i++) {
     for (let player = 0; player < numPlayers; player++) {

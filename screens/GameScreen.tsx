@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GameTable } from '../components/GameTable';
 import { BiddingScreen } from '../components/BiddingScreen';
+import { DiscardingScreen } from '../components/DiscardingScreen';
 import { Card } from '../components/Card';
 import { PitchGame } from '../lib/gameState';
 import { GameCard } from '../lib/game';
@@ -76,6 +77,13 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   };
   
+  const handleDiscardCard = (cardId: string) => {
+    const success = game.discardCard('player-1', cardId);
+    if (success) {
+      updateGameState();
+    }
+  };
+  
   const handlePlayCard = (cardId: string) => {
     if (gameState.currentPlayer !== 'player-1') return;
     
@@ -107,6 +115,21 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         playerName={currentPlayer.name}
         onPlaceBid={handlePlaceBid}
         onPass={handlePass}
+      />
+    );
+  }
+  
+  // Render discarding phase
+  if (gameState.phase === 'discarding') {
+    return (
+      <DiscardingScreen
+        playerHand={player.hand}
+        trumpSuit={gameState.trumpSuit}
+        currentPlayer={gameState.currentPlayer}
+        playerName={currentPlayer.name}
+        discards={game.getDiscards('player-1')}
+        onDiscardCard={handleDiscardCard}
+        onComplete={() => {}} // Not used - completion is automatic
       />
     );
   }

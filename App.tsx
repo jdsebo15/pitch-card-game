@@ -25,7 +25,17 @@ export default function App() {
               
               <Text style={styles.rulesSection}>💰 Bidding</Text>
               <Text style={styles.rulesText}>
-                Players bid on how many points they think they can take (2-4). The highest bidder chooses the trump suit.
+                Each player is dealt 9 cards. Players bid on how many points they think they can take (2-4). The highest bidder chooses the trump suit.
+              </Text>
+              
+              <Text style={styles.rulesSection}>🗑️ Discarding Phase</Text>
+              <Text style={styles.rulesText}>
+                After trump is chosen, each player discards 3 cards:{'\n'}
+                • Cannot discard trump unless you have ALL trumps{'\n'}
+                • Point cards (A, J, 10, 3, 2, jokers) cannot be discarded{'\n'}
+                • If you have all point cards, must pass one to left player{'\n'}
+                • After discarding, players are dealt back to 6 cards{'\n'}
+                • Bidder gets remaining cards (kitty) after discarding
               </Text>
               
               <Text style={styles.rulesSection}>🎯 Point Values (Catch Order)</Text>
