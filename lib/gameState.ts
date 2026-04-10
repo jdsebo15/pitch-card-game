@@ -1,9 +1,10 @@
-import { Suit, Rank, GameCard, Player, Trick, GameState, createDeck, shuffleDeck, dealCards, getCardValue, canPlayCard, determineTrickWinner, calculatePoints, getCardPoints, isTrumpCard, isOffJack } from './game';
+import { Suit, Rank, GameCard, Player, Trick, GameState, createDeck, shuffleDeck, dealCards, getCardValue, canPlayCard, determineTrickWinner, calculatePoints, getCardPoints, isTrumpCard } from './game';
 
 export class PitchGame {
   private state: GameState;
   private kitty: GameCard[] = [];
   private discards: Map<string, GameCard[]> = new Map();
+  private bidderPool: GameCard[] = [];
   private passedPlayers: Set<string> = new Set();
   
   constructor(numPlayers: number = 4) {
@@ -67,6 +68,10 @@ export class PitchGame {
   getKitty(): GameCard[] {
     return [...this.kitty];
   }
+
+  getBidderPool(): GameCard[] {
+    return [...this.bidderPool];
+  }
   
   getDiscards(playerId: string): GameCard[] {
     return this.discards.get(playerId) || [];
@@ -127,29 +132,30 @@ export class PitchGame {
   
   private endBiddingPhase() {
     if (this.state.bidder && this.state.bid !== null) {
-      const bidder = this.state.players.find(p => p.id === this.state.bidder)!;
-      const trumpSuit = bidder.hand.find(card => card.suit !== 'joker')?.suit || 'hearts';
-      this.state.trumpSuit = trumpSuit;
-      
-      // Move to discarding phase
-      this.state.phase = 'discarding';
+      this.state.phase = 'choosing-trump';
       this.state.currentPlayer = this.state.bidder;
     } else if (this.state.forcedBid) {
-      // Dealer is forced to bid 5
       const dealer = this.state.players.find(p => p.id === this.state.dealer)!;
       this.state.bidder = dealer.id;
       this.state.bid = 5;
-      this.state.trumpSuit = dealer.hand.find(card => card.suit !== 'joker')?.suit || 'hearts';
-      
-      // Move to discarding phase
-      this.state.phase = 'discarding';
+      this.state.phase = 'choosing-trump';
       this.state.currentPlayer = dealer.id;
     } else {
-      // No one bid, redeal
       this.state = this.initializeGame(this.state.players.length);
     }
   }
   
+  chooseTrump(playerId: string, suit: Suit): boolean {
+    if (this.state.phase !== 'choosing-trump') return false;
+    if (this.state.bidder !== playerId || this.state.currentPlayer !== playerId) return false;
+    if (suit === 'joker') return false;
+
+    this.state.trumpSuit = suit;
+    this.state.phase = 'discarding';
+    this.state.currentPlayer = this.state.bidder;
+    return true;
+  }
+
   // Discard cards (3 cards to discard from 9 to get to 6)
   discardCard(playerId: string, cardId: string): boolean {
     if (this.state.phase !== 'discarding') return false;
@@ -206,20 +212,16 @@ export class PitchGame {
   }
   
   private completeDiscardingPhase() {
-    // Handle passing of point cards if someone has more than 6 point cards
     this.handlePointCardPassing();
-    
-    // All leftover cards go to the bidder (kitty)
     this.assignKitty();
-    
-    // Bidder selects best 6 cards from their 9 cards + kitty
-    this.bidderSelectsHand();
-    
-    // Other players get dealt back to 6 cards
-    this.replenishOtherHands();
-    
-    // Move to playing phase
-    this.state.phase = 'playing';
+
+    const bidder = this.state.players.find(p => p.id === this.state.bidder!);
+    if (!bidder) return;
+
+    this.bidderPool = [...bidder.hand, ...this.kitty];
+    this.kitty = [];
+
+    this.state.phase = 'selecting-kitty';
     this.state.currentPlayer = this.state.bidder!;
   }
   
@@ -246,19 +248,35 @@ export class PitchGame {
     }
   }
   
-  private bidderSelectsHand() {
-    const bidder = this.state.players.find(p => p.id === this.state.bidder!);
-    if (!bidder || !this.state.trumpSuit) return;
+  confirmBidderHand(playerId: string, selectedCardIds: string[]): boolean {
+    if (this.state.phase !== 'selecting-kitty') return false;
+    if (this.state.bidder !== playerId || this.state.currentPlayer !== playerId) return false;
+    if (selectedCardIds.length !== 6) return false;
 
-    const allCards = [...bidder.hand, ...this.kitty];
-    allCards.sort((a, b) => getCardValue(b, this.state.trumpSuit) - getCardValue(a, this.state.trumpSuit));
-    bidder.hand = allCards.slice(0, 6);
-    this.kitty = allCards.slice(6);
+    const uniqueIds = new Set(selectedCardIds);
+    if (uniqueIds.size !== 6) return false;
+
+    const selectedCards = this.bidderPool.filter(card => uniqueIds.has(card.id));
+    if (selectedCards.length !== 6) return false;
+
+    const bidder = this.state.players.find(p => p.id === playerId);
+    if (!bidder) return false;
+
+    bidder.hand = selectedCards;
+    this.kitty = this.bidderPool.filter(card => !uniqueIds.has(card.id));
+    this.bidderPool = [];
+
+    this.normalizeHandsToSix();
+
+    this.state.phase = 'playing';
+    this.state.currentPlayer = this.state.bidder!;
+    return true;
   }
-  
-  private replenishOtherHands() {
+
+  private normalizeHandsToSix() {
     for (const player of this.state.players) {
       if (player.id === this.state.bidder) continue;
+
       while (player.hand.length > 6) {
         const discardableIndex = player.hand.findIndex(card => this.canDiscardCard(player.id, card));
         if (discardableIndex === -1) break;
@@ -370,13 +388,30 @@ export class PitchGame {
   makeAIMove(playerId: string): void {
     if (this.state.phase === 'bidding') {
       this.makeAIBid(playerId);
+    } else if (this.state.phase === 'choosing-trump') {
+      this.makeAIChooseTrump(playerId);
     } else if (this.state.phase === 'discarding') {
       this.makeAIDiscard(playerId);
+    } else if (this.state.phase === 'selecting-kitty') {
+      this.makeAISelectKitty(playerId);
     } else if (this.state.phase === 'playing') {
       this.makeAIPlay(playerId);
     }
   }
   
+  private makeAIChooseTrump(playerId: string): void {
+    const player = this.state.players.find(p => p.id === playerId)!;
+    const suits: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
+
+    const bestSuit = suits.reduce((best, suit) => {
+      const bestCount = player.hand.filter(card => isTrumpCard(card, best)).length;
+      const suitCount = player.hand.filter(card => isTrumpCard(card, suit)).length;
+      return suitCount > bestCount ? suit : best;
+    }, 'hearts' as Suit);
+
+    this.chooseTrump(playerId, bestSuit);
+  }
+
   private makeAIDiscard(playerId: string): void {
     const player = this.state.players.find(p => p.id === playerId)!;
     
@@ -443,10 +478,22 @@ export class PitchGame {
     }
   }
   
+  private makeAISelectKitty(playerId: string): void {
+    if (!this.state.trumpSuit) return;
+    const selectedCards = [...this.bidderPool]
+      .sort((a, b) => getCardValue(b, this.state.trumpSuit) - getCardValue(a, this.state.trumpSuit))
+      .slice(0, 6)
+      .map(card => card.id);
+
+    this.confirmBidderHand(playerId, selectedCards);
+  }
+
   private makeAIPlay(playerId: string): void {
     const player = this.state.players.find(p => p.id === playerId)!;
     const currentTrick = this.state.tricks[this.state.tricks.length - 1];
-    const leadSuit = currentTrick?.cards[0]?.card.suit || null;
+    const leadSuit = currentTrick?.cards[0]
+      ? (this.isTrump(currentTrick.cards[0].card) ? this.state.trumpSuit : currentTrick.cards[0].card.suit)
+      : null;
     
     // Find playable cards
     const playableCards = player.hand.filter(card => 

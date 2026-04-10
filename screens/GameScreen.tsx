@@ -3,9 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GameTable } from '../components/GameTable';
 import { BiddingScreen } from '../components/BiddingScreen';
 import { DiscardingScreen } from '../components/DiscardingScreen';
+import { TrumpSelectionScreen } from '../components/trumpselectionscreen';
+import { BidderHandSelectionScreen } from '../components/bidderhandselectionscreen';
 import { Card } from '../components/Card';
 import { PitchGame } from '../lib/gameState';
-import { GameCard } from '../lib/game';
+import { GameCard, Suit } from '../lib/game';
 
 export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   const [game, setGame] = useState<PitchGame>(new PitchGame());
@@ -79,8 +81,22 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   };
   
+  const handleChooseTrump = (suit: Suit) => {
+    const success = game.chooseTrump('player-1', suit);
+    if (success) {
+      updateGameState();
+    }
+  };
+
   const handleDiscardCard = (cardId: string) => {
     const success = game.discardCard('player-1', cardId);
+    if (success) {
+      updateGameState();
+    }
+  };
+
+  const handleConfirmBidderHand = (cardIds: string[]) => {
+    const success = game.confirmBidderHand('player-1', cardIds);
     if (success) {
       updateGameState();
     }
@@ -121,6 +137,26 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     );
   }
   
+  if (gameState.phase === 'choosing-trump') {
+    if (gameState.currentPlayer === 'player-1') {
+      return (
+        <TrumpSelectionScreen
+          playerHand={player.hand}
+          forcedBid={gameState.forcedBid}
+          bid={gameState.bid}
+          onChooseTrump={handleChooseTrump}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.centeredPhaseScreen}>
+        <Text style={styles.phaseTitle}>Choosing Trump</Text>
+        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to choose trump...</Text>
+      </View>
+    );
+  }
+
   // Render discarding phase
   if (gameState.phase === 'discarding') {
     return (
@@ -131,8 +167,27 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         playerName={currentPlayer.name}
         discards={game.getDiscards('player-1')}
         onDiscardCard={handleDiscardCard}
-        onComplete={() => {}} // Not used - completion is automatic
+        onComplete={() => {}}
       />
+    );
+  }
+
+  if (gameState.phase === 'selecting-kitty') {
+    if (gameState.currentPlayer === 'player-1') {
+      return (
+        <BidderHandSelectionScreen
+          cards={game.getBidderPool()}
+          trumpSuit={gameState.trumpSuit}
+          onConfirm={handleConfirmBidderHand}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.centeredPhaseScreen}>
+        <Text style={styles.phaseTitle}>Bidder Choosing Final Hand</Text>
+        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to lock in their 6 cards...</Text>
+      </View>
     );
   }
   
@@ -196,7 +251,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Phase:</Text>
           <Text style={styles.infoValue}>
-            {gameState.phase === 'playing' ? 'Playing' : 'Scoring'}
+            {gameState.phase === 'playing' ? 'Playing' : gameState.phase === 'scoring' ? 'Scoring' : gameState.phase}
           </Text>
         </View>
         
@@ -305,6 +360,20 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     minWidth: 180,
+  },
+  centeredPhaseScreen: {
+    flex: 1,
+    backgroundColor: '#1a202c',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  phaseTitle: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   infoRow: {
     flexDirection: 'row',

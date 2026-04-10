@@ -35,7 +35,7 @@ export default function App() {
                 Each player is dealt 9 cards.{'\n'}
                 Minimum bid is 5 points (up to 10).{'\n'}
                 If everyone passes, dealer is forced to bid 5.{'\n'}
-                Highest bidder chooses trump suit.
+                Highest bidder chooses trump suit manually.
               </Text>
               
               <Text style={styles.rulesSection}>🗑️ Discarding Phase</Text>
@@ -46,7 +46,7 @@ export default function App() {
                 • Point cards (A, J, 10, 3, 2, jokers) cannot be discarded{'\n'}
                 • If you have more than 6 point cards, must pass one to left player{'\n'}
                 • All leftover cards go to bidder (kitty){'\n'}
-                • Bidder selects best 6 cards from their 9 + kitty
+                • Bidder manually selects the final 6 cards to keep
               </Text>
               
               <Text style={styles.rulesSection}>🎯 Point Values (Catch Order)</Text>
@@ -62,7 +62,7 @@ export default function App() {
                 9. 9, 8, 7, 6, 5, 4 = 0 points{'\n'}
                 10. 3️⃣ 3 = 3 points{'\n'}
                 11. 2️⃣ 2 = 1 point (auto-keep){'\n'}{'\n'}
-                Note: 2 of trump is automatically kept by whoever catches it, even if they don't win the trick.
+                Note: off-jack counts as trump. This build scores the trick winner for captured points.
               </Text>
               
               <Text style={styles.rulesSection}>🃏 Game Play</Text>
@@ -84,7 +84,7 @@ export default function App() {
               
               <Text style={styles.rulesSection}>🏆 Winning</Text>
               <Text style={styles.rulesText}>
-                The bidder must make at least their bid to score points. If they fail, they lose the bid amount. The player with the most points after all cards are played wins.
+                The bidder's team must make at least their bid to score positively. If they fail, they lose the bid amount. Team score is what matters.
               </Text>
             </View>
             

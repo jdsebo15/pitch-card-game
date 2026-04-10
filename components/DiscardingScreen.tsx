@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Card } from './Card';
-import { GameCard } from '../lib/game';
+import { GameCard, getCardPoints, isOffJack, isTrumpCard } from '../lib/game';
 
 interface DiscardingScreenProps {
   playerHand: GameCard[];
@@ -30,37 +30,13 @@ export function DiscardingScreen({
   const cardsRemaining = cardsToDiscard - cardsDiscarded;
   
   const isPointCard = (card: GameCard): boolean => {
-    if (!trumpSuit) return false;
-    
-    // Cards worth points
-    if (card.rank === 'A') return true;
-    if (card.suit === trumpSuit && card.rank === 'J') return true;
-    if (card.rank === 'big' || card.rank === 'little') return true;
-    if (card.rank === '10') return true;
-    if (card.rank === '3') return true;
-    if (card.rank === '2') return true;
-    
-    // Off jack
-    if (card.rank === 'J' && trumpSuit) {
-      const isSameColor = (
-        (trumpSuit === 'hearts' || trumpSuit === 'diamonds') && 
-        (card.suit === 'hearts' || card.suit === 'diamonds')
-      ) || (
-        (trumpSuit === 'clubs' || trumpSuit === 'spades') && 
-        (card.suit === 'clubs' || card.suit === 'spades')
-      );
-      
-      if (isSameColor && card.suit !== trumpSuit) {
-        return true;
-      }
-    }
-    
-    return false;
+    if (!trumpSuit || trumpSuit === 'joker') return false;
+    return getCardPoints(card, trumpSuit) > 0;
   };
   
-  const isTrumpCard = (card: GameCard): boolean => {
-    if (!trumpSuit) return false;
-    return card.suit === trumpSuit || card.suit === 'joker';
+  const isTrump = (card: GameCard): boolean => {
+    if (!trumpSuit || trumpSuit === 'joker') return false;
+    return isTrumpCard(card, trumpSuit);
   };
   
   const canDiscardCard = (card: GameCard): boolean => {
@@ -72,10 +48,13 @@ export function DiscardingScreen({
     
     // Can't discard trump unless you have all trumps
     // (This is a simplified check - full logic is in game state)
-    if (isTrumpCard(card) && isPointCard(card)) {
-      return false; // Point trumps can never be discarded
+    if (isPointCard(card)) return false;
+
+    if (isTrump(card)) {
+      const trumpCount = playerHand.filter(isTrump).length;
+      if (trumpCount <= 6) return false;
     }
-    
+
     return true;
   };
   
@@ -96,9 +75,9 @@ export function DiscardingScreen({
   };
   
   const getCardStatus = (card: GameCard): string => {
-    if (isTrumpCard(card)) {
+    if (isTrump(card)) {
       if (isPointCard(card)) {
-        return 'Trump Point Card (Cannot Discard)';
+        return isOffJack(card, trumpSuit === 'joker' ? null : trumpSuit) ? 'Off-Jack (Cannot Discard)' : 'Trump Point Card (Cannot Discard)';
       }
       return 'Trump Card';
     }
@@ -146,7 +125,7 @@ export function DiscardingScreen({
           {playerHand.map((card) => {
             const canDiscard = canDiscardCard(card);
             const isSelected = selectedCard === card.id;
-            const isTrump = isTrumpCard(card);
+            const cardIsTrump = isTrump(card);
             const isPoint = isPointCard(card);
             
             return (
@@ -156,7 +135,7 @@ export function DiscardingScreen({
                   styles.cardWrapper,
                   !canDiscard && styles.cardDisabled,
                   isSelected && styles.cardSelected,
-                  isTrump && styles.cardTrump,
+                  cardIsTrump && styles.cardTrump,
                   isPoint && styles.cardPoint,
                 ]}
                 onPress={() => handleCardSelect(card.id)}
@@ -214,7 +193,7 @@ export function DiscardingScreen({
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🚫</Text>
-            <Text style={styles.ruleText}>Cannot discard trump unless you have ALL trumps</Text>
+            <Text style={styles.ruleText}>Cannot discard trump unless you have more than 6 trump cards</Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🎯</Text>
@@ -222,11 +201,11 @@ export function DiscardingScreen({
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🔄</Text>
-            <Text style={styles.ruleText}>If you have all point cards, must pass one to left player</Text>
+            <Text style={styles.ruleText}>If you have more than 6 point cards, one passes left automatically</Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>🎴</Text>
-            <Text style={styles.ruleText}>After discarding, you'll be dealt back to 6 cards</Text>
+            <Text style={styles.ruleText}>Bidder then chooses the final 6 cards to keep</Text>
           </View>
           <View style={styles.ruleItem}>
             <Text style={styles.ruleEmoji}>👑</Text>

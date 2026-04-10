@@ -30,7 +30,7 @@ export interface GameState {
   tricks: Trick[];
   scores: Record<string, number>;
   teamScores: Record<number, number>;
-  phase: 'bidding' | 'discarding' | 'playing' | 'scoring';
+  phase: 'bidding' | 'choosing-trump' | 'discarding' | 'selecting-kitty' | 'playing' | 'scoring';
   dealer: string;
   forcedBid: boolean;
 }
