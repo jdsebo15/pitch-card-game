@@ -51,11 +51,13 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fon
   }
 
   if (suit === 'joker') {
+    // Smaller rank text for jokers since "big" and "lil" are longer
+    const jokerRankSize = fontSize ? fontSize * 0.7 : Math.max(6, width * 0.14);
     return (
       <View style={[styles.card, { width, height }]}>
         <View style={styles.cardCenter}>
           <Text style={[styles.centerSymbol, { color: '#7c3aed', fontSize: centerSymbolSize }]}>🃏</Text>
-          <Text style={[styles.centerRank, { color: '#000000', fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
+          <Text style={[styles.centerRank, { color: '#000000', fontSize: jokerRankSize }]}>{rankDisplay[rank]}</Text>
         </View>
       </View>
     );
@@ -105,7 +107,6 @@ const styles = StyleSheet.create({
   },
   centerRank: {
     fontWeight: 'bold',
-    marginTop: 4,
   },
 
 });
