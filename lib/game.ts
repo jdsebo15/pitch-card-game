@@ -185,14 +185,17 @@ export function determineTrickWinner(
 
 export function getCardPoints(card: GameCard, trumpSuit: Suit): number {
   let points = 0;
-  if (card.rank === 'A') points += 1;
+  const isTrump = isTrumpCard(card, trumpSuit);
+  // Only trump cards (and jokers) can score points
+  if (!isTrump) return 0;
+  if (card.suit === trumpSuit && card.rank === 'A') points += 1;
   if (card.suit === trumpSuit && card.rank === 'J') points += 1;
   if (isOffJack(card, trumpSuit)) points += 1;
-  if (card.rank === 'big') points += 1;
-  if (card.rank === 'little') points += 1;
-  if (card.rank === '10') points += 1;
-  if (card.rank === '3') points += 3;
-  if (card.rank === '2') points += 1;
+  if (card.rank === 'big') points += 1;   // joker
+  if (card.rank === 'little') points += 1; // joker
+  if (card.suit === trumpSuit && card.rank === '10') points += 1;
+  if (card.suit === trumpSuit && card.rank === '3') points += 3;
+  if (card.suit === trumpSuit && card.rank === '2') points += 1;
   return points;
 }
 
