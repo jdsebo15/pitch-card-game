@@ -127,8 +127,8 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     const discards = game.getDiscards(gameState.currentPlayer);
     const handSize = currentPlayer.hand.length;
     const needToDiscard = Math.max(0, handSize - 6);
-    const remainingSlots = 3 - discards.length;
-    const canDiscardMore = needToDiscard > 0 && remainingSlots > 0;
+    // Can discard any number of discardable cards until hand size ≤ 6
+    const canDiscardMore = needToDiscard > 0;
     
     return (
       <View style={phaseStyles.container}>

@@ -178,9 +178,11 @@ export class PitchGame {
     player.hand.splice(cardIndex, 1);
     this.discards.get(playerId)!.push(card);
     
-    // After bidder discards 3, move to selecting-kitty
+    // After bidder discards enough to reach 6 cards or less, move to selecting-kitty
     const playerDiscards = this.discards.get(playerId)!.length;
-    if (playerDiscards >= 3) {
+    const handSize = player.hand.length;
+    // If player has 6 or fewer cards, they can finish discarding
+    if (handSize <= 6) {
       this.completeDiscardingPhase();
     }
     
