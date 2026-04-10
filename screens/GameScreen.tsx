@@ -441,14 +441,14 @@ const biddingStyles = StyleSheet.create({
     position: 'absolute',
     top: '50%', // Center vertically
     left: '50%', // Center horizontally
-    transform: [{ translateX: -150 }, { translateY: -100 }], // Center based on size
+    transform: [{ translateX: -125 }, { translateY: -100 }], // Center based on size
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#3b82f6',
-    width: 300,
+    width: 250,
     height: 200,
   },
   title: {
