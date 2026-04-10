@@ -160,32 +160,27 @@ export function determineTrickWinner(
   trumpSuit: Suit | null,
   leadSuit: Suit
 ): string {
-  let winner = trickCards[0];
+  if (!trumpSuit || trickCards.length === 0) return trickCards[0]?.playerId || '';
 
-  const effectiveSuit = (c: GameCard) => isTrumpCard(c, trumpSuit) ? trumpSuit : c.suit;
-
-  for (let i = 1; i < trickCards.length; i++) {
-    const current = trickCards[i];
-    const winnerIsTrump = effectiveSuit(winner.card) === trumpSuit;
-    const currentIsTrump = effectiveSuit(current.card) === trumpSuit;
-
-    if (currentIsTrump && !winnerIsTrump) {
-      winner = current;
-      continue;
-    }
-
-    if (currentIsTrump === winnerIsTrump) {
-      const winnerFollowsLead = effectiveSuit(winner.card) === leadSuit;
-      const currentFollowsLead = effectiveSuit(current.card) === leadSuit;
-
-      if ((!winnerIsTrump && currentFollowsLead && !winnerFollowsLead) ||
-          (currentFollowsLead === winnerFollowsLead && getCardValue(current.card, trumpSuit) > getCardValue(winner.card, trumpSuit))) {
-        winner = current;
-      }
-    }
+  // First, find the highest trump card if any
+  const trumpCards = trickCards.filter(({ card }) => isTrumpCard(card, trumpSuit));
+  if (trumpCards.length > 0) {
+    // Highest trump wins
+    return trumpCards.reduce((best, current) => 
+      getCardValue(current.card, trumpSuit) > getCardValue(best.card, trumpSuit) ? current : best
+    ).playerId;
   }
 
-  return winner.playerId;
+  // No trumps played, highest card of lead suit wins
+  const leadSuitCards = trickCards.filter(({ card }) => card.suit === leadSuit);
+  if (leadSuitCards.length > 0) {
+    return leadSuitCards.reduce((best, current) => 
+      getCardValue(current.card, trumpSuit) > getCardValue(best.card, trumpSuit) ? current : best
+    ).playerId;
+  }
+
+  // Should not happen - someone should have followed suit
+  return trickCards[0].playerId;
 }
 
 export function getCardPoints(card: GameCard, trumpSuit: Suit): number {

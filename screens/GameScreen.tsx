@@ -5,6 +5,7 @@ import { BiddingScreen } from '../components/BiddingScreen';
 import { DiscardingScreen } from '../components/DiscardingScreen';
 import { TrumpSelectionScreen } from '../components/trumpselectionscreen';
 import { BidderHandSelectionScreen } from '../components/bidderhandselectionscreen';
+import { DebugOverlay } from '../components/debugoverlay';
 import { Card } from '../components/Card';
 import { PitchGame } from '../lib/gameState';
 import { GameCard, Suit } from '../lib/game';
@@ -13,6 +14,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   const [game, setGame] = useState<PitchGame>(new PitchGame());
   const [gameState, setGameState] = useState(game.getState());
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
   
   const player = gameState.players.find(p => p.id === 'player-1')!;
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer)!;
@@ -287,6 +289,22 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       <TouchableOpacity style={styles.menuButton} onPress={onGameEnd}>
         <Text style={styles.menuButtonText}>Menu</Text>
       </TouchableOpacity>
+      
+      {/* Debug button */}
+      <TouchableOpacity style={styles.debugButton} onPress={() => setShowDebug(true)}>
+        <Text style={styles.debugButtonText}>🔍</Text>
+      </TouchableOpacity>
+      
+      {/* Debug overlay */}
+      <DebugOverlay
+        visible={showDebug}
+        onClose={() => setShowDebug(false)}
+        playerHands={gameState.players.map(p => ({ name: p.name, hand: p.hand }))}
+        trumpSuit={gameState.trumpSuit}
+        currentPhase={gameState.phase}
+        scores={gameState.scores}
+        teamScores={gameState.teamScores}
+      />
     </View>
   );
 }
@@ -402,5 +420,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  debugButton: {
+    position: 'absolute',
+    top: 20,
+    right: 80,
+    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

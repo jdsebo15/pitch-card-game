@@ -339,8 +339,23 @@ export class PitchGame {
     const winnerId = determineTrickWinner(trick.cards, this.state.trumpSuit, leadSuit);
     trick.winner = winnerId;
     
-    const points = calculatePoints(trick, this.state.trumpSuit);
-    this.state.scores[winnerId] += points;
+    // Calculate points for the trick
+    const trickPoints = calculatePoints(trick, this.state.trumpSuit);
+    this.state.scores[winnerId] += trickPoints;
+    
+    // Special rule: 2 of trump auto-keep
+    // The player who catches the 2 of trump gets the point, even if they don't win the trick
+    for (const { card, playerId } of trick.cards) {
+      if (card.suit === this.state.trumpSuit && card.rank === '2') {
+        // The catcher of the 2 gets the point
+        // Note: This point is already included in trickPoints, but we ensure it goes to the catcher
+        // by transferring it from winner to catcher if different
+        if (playerId !== winnerId) {
+          this.state.scores[winnerId] -= 1; // Remove from winner
+          this.state.scores[playerId] += 1; // Give to catcher
+        }
+      }
+    }
     
     // Winner leads next trick
     this.state.currentPlayer = winnerId;
@@ -445,25 +460,93 @@ export class PitchGame {
   private makeAIBid(playerId: string): void {
     const player = this.state.players.find(p => p.id === playerId)!;
     
-    // Simple AI: Count trump candidates and high cards
-    let trumpCandidates = 0;
+    // Improved AI bidding strategy
+    // Count potential points and trump strength
+    let potentialPoints = 0;
+    let trumpStrength = 0;
     let highCards = 0;
     
+    // Evaluate each suit as potential trump
+    const suits: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const suitEvaluations = suits.map(suit => {
+      let points = 0;
+      let strength = 0;
+      
+      for (const card of player.hand) {
+        // Count points this card would be worth if this suit is trump
+        if (card.suit === suit && card.rank === 'J') points += 1; // Main jack
+        if (card.suit === suit && card.rank === 'A') points += 1;
+        if (card.suit === suit && card.rank === '10') points += 1;
+        if (card.suit === suit && card.rank === '3') points += 3;
+        if (card.suit === suit && card.rank === '2') points += 1;
+        
+        // Count off-jack points
+        if (card.rank === 'J' && card.suit !== suit) {
+          const isSameColor = (
+            (suit === 'hearts' || suit === 'diamonds') && 
+            (card.suit === 'hearts' || card.suit === 'diamonds')
+          ) || (
+            (suit === 'clubs' || suit === 'spades') && 
+            (card.suit === 'clubs' || card.suit === 'spades')
+          );
+          if (isSameColor) points += 1;
+        }
+        
+        // Jokers are always trump
+        if (card.suit === 'joker') {
+          points += 1;
+          strength += 10;
+        }
+        
+        // Trump strength (higher cards are better)
+        if (card.suit === suit) {
+          const value = getCardValue(card, suit);
+          if (value >= 110) strength += 3; // High trump (J, A, K, Q)
+          else if (value >= 100) strength += 2; // Medium trump
+          else strength += 1; // Low trump
+        }
+      }
+      
+      return { suit, points, strength };
+    });
+    
+    // Find best suit
+    const bestSuit = suitEvaluations.reduce((best, current) => 
+      current.points > best.points ? current : best
+    );
+    
+    potentialPoints = bestSuit.points;
+    trumpStrength = bestSuit.strength;
+    
+    // Count high cards (10+) for non-trump evaluation
     for (const card of player.hand) {
       const value = getCardValue(card, null);
       if (value >= 10) highCards++;
-      if (card.rank === 'J' || card.rank === 'A' || card.suit === 'joker') trumpCandidates++;
     }
     
     let bid = 0; // Pass
     
-    // With minimum bid of 5, AI needs stronger hand to bid
-    if (trumpCandidates >= 3 && highCards >= 4) {
-      bid = 7; // Strong hand
-    } else if (trumpCandidates >= 2 && highCards >= 3) {
-      bid = 6; // Good hand
-    } else if (trumpCandidates >= 1 && highCards >= 2) {
+    // Bid calculation based on hand strength
+    if (potentialPoints >= 6 && trumpStrength >= 15) {
+      bid = 10; // Very strong hand
+    } else if (potentialPoints >= 5 && trumpStrength >= 12) {
+      bid = 8; // Strong hand
+    } else if (potentialPoints >= 4 && trumpStrength >= 10) {
+      bid = 7; // Good hand
+    } else if (potentialPoints >= 3 && trumpStrength >= 8) {
+      bid = 6; // Decent hand
+    } else if (potentialPoints >= 2 && trumpStrength >= 6) {
       bid = 5; // Minimum bid
+    }
+    
+    // Adjust based on position (more aggressive in early position)
+    const playerIndex = this.state.players.findIndex(p => p.id === playerId);
+    const dealerIndex = this.state.players.findIndex(p => p.id === this.state.dealer);
+    const position = (playerIndex - dealerIndex - 1 + 4) % 4; // 0 = first to bid, 3 = last
+    
+    if (position <= 1 && bid === 5) {
+      // More conservative in early position with minimum hand
+      bid = 0;
     }
     
     // Only bid if higher than current bid
