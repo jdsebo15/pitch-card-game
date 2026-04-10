@@ -373,7 +373,8 @@ const infoStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
-    maxWidth: 180,
+    maxWidth: 160,
+    maxHeight: 80,
   },
   scoreColumn: {
     gap: 2,
@@ -384,20 +385,20 @@ const infoStyles = StyleSheet.create({
   teamChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1.5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   teamLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
   },
   teamScore: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   trumpBadge: {
