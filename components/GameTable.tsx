@@ -19,13 +19,14 @@ interface PlayerPosition {
 
 interface GameTableProps {
   players: PlayerPosition[];
+  playerHands?: Record<string, GameCard[]>;
   centerCards?: Array<{ card: GameCard; playerId: string }>;
   trumpSuit?: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker' | null;
   currentBid?: number | null;
   teamScores?: Record<number, number>;
 }
 
-export function GameTable({ players, centerCards = [], trumpSuit, currentBid, teamScores = {0: 0, 1: 0} }: GameTableProps) {
+export function GameTable({ players, playerHands = {}, centerCards = [], trumpSuit, currentBid, teamScores = {0: 0, 1: 0} }: GameTableProps) {
   const getPositionStyle = (position: 'top' | 'right' | 'bottom' | 'left') => {
     switch (position) {
       case 'top':
@@ -140,14 +141,34 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid, te
                 {player.isDealer && ' • Dealer'}
               </Text>
               
-              {/* Hand count indicator */}
+              {/* Hand representation */}
               <View style={styles.handIndicator}>
-                {Array.from({ length: Math.min(player.handCount, 5) }).map((_, i) => (
-                  <View key={i} style={[styles.cardBackMini, { marginLeft: i > 0 ? -8 : 0 }]} />
-                ))}
-                {player.handCount > 5 && (
-                  <Text style={styles.moreCards}>+{player.handCount - 5}</Text>
-                )}
+                {(() => {
+                  const hand = playerHands[player.id] || [];
+                  const cardsToShow = hand.slice(0, 4); // Show up to 4 cards
+                  
+                  return (
+                    <>
+                      {cardsToShow.map((card, i) => (
+                        <View key={i} style={[styles.cardMini, { marginLeft: i > 0 ? -12 : 0 }]}>
+                          <Card 
+                            suit={card.suit} 
+                            rank={card.rank} 
+                            width={30} 
+                            height={42} 
+                            fontSize={8}
+                          />
+                        </View>
+                      ))}
+                      {hand.length > 4 && (
+                        <Text style={styles.moreCards}>+{hand.length - 4}</Text>
+                      )}
+                      {hand.length === 0 && (
+                        <Text style={styles.noCards}>No cards</Text>
+                      )}
+                    </>
+                  );
+                })()}
               </View>
             </View>
             
@@ -305,19 +326,28 @@ const styles = StyleSheet.create({
   handIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 30,
   },
-  cardBackMini: {
-    width: 20,
-    height: 28,
-    backgroundColor: '#1e40af',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#fff',
+  cardMini: {
+    borderRadius: 3,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   moreCards: {
     color: '#fff',
     fontSize: 10,
     marginLeft: 4,
+    fontWeight: 'bold',
+  },
+  noCards: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontStyle: 'italic',
   },
   currentTurnIndicator: {
     position: 'absolute',

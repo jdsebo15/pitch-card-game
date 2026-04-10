@@ -57,12 +57,44 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   useEffect(() => {
     updateGameState();
     
-    // AI turn handling
+    // AI turn handling with natural random delays
     if (!currentPlayer.isHuman && gameState.phase !== 'scoring') {
+      // Different delays for different phases to feel natural
+      let baseDelay = 800; // ms
+      
+      if (gameState.phase === 'bidding') {
+        // Bidding: quick decisions (0.8-1.5s)
+        baseDelay = 800 + Math.random() * 700;
+      } else if (gameState.phase === 'choosing-trump') {
+        // Trump selection: medium thinking (1-2s)
+        baseDelay = 1000 + Math.random() * 1000;
+      } else if (gameState.phase === 'discarding') {
+        // Discarding: quick but thoughtful (0.5-1.2s)
+        baseDelay = 500 + Math.random() * 700;
+      } else if (gameState.phase === 'selecting-kitty') {
+        // Kitty selection: careful consideration (1.5-3s)
+        baseDelay = 1500 + Math.random() * 1500;
+      } else if (gameState.phase === 'playing') {
+        // Playing cards: varies by situation (0.6-2s)
+        const currentTrick = gameState.tricks[gameState.tricks.length - 1];
+        const trickCards = currentTrick?.cards || [];
+        
+        if (trickCards.length === 0) {
+          // Leading: quick decision (0.6-1.2s)
+          baseDelay = 600 + Math.random() * 600;
+        } else if (trickCards.length === 3) {
+          // Last to play: quick (0.5-1s)
+          baseDelay = 500 + Math.random() * 500;
+        } else {
+          // Middle of trick: medium thinking (0.8-1.8s)
+          baseDelay = 800 + Math.random() * 1000;
+        }
+      }
+      
       const timer = setTimeout(() => {
         game.makeAIMove(currentPlayer.id);
         updateGameState();
-      }, 1000);
+      }, baseDelay);
       
       return () => clearTimeout(timer);
     }
@@ -198,6 +230,10 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     <View style={styles.container}>
       <GameTable
         players={playerPositions}
+        playerHands={gameState.players.reduce((acc, p) => ({
+          ...acc,
+          [p.id]: p.hand
+        }), {})}
         centerCards={centerCards}
         trumpSuit={gameState.trumpSuit}
         currentBid={gameState.bid}

@@ -8,6 +8,7 @@ export interface CardProps {
   faceUp?: boolean;
   width?: number;
   height?: number;
+  fontSize?: number;
 }
 
 const suitSymbols: Record<Suit, string> = {
@@ -32,7 +33,15 @@ const rankDisplay: Record<Rank, string> = {
   'big': 'Big', 'little': 'Little',
 };
 
-export function Card({ suit, rank, faceUp = true, width = 100, height = 140 }: CardProps) {
+export function Card({ suit, rank, faceUp = true, width = 100, height = 140, fontSize }: CardProps) {
+  // Calculate font sizes based on card size or custom fontSize
+  const rankSize = fontSize || Math.max(8, width * 0.2);
+  const suitSize = fontSize ? fontSize * 0.8 : Math.max(6, width * 0.16);
+  const centerSymbolSize = fontSize ? fontSize * 2.4 : Math.max(24, width * 0.48);
+  const centerRankSize = fontSize ? fontSize * 1.2 : Math.max(12, width * 0.24);
+  const jokerSymbolSize = fontSize ? fontSize * 2.4 : Math.max(24, width * 0.48);
+  const jokerTextSize = fontSize ? fontSize * 0.8 : Math.max(8, width * 0.16);
+  const jokerPointSize = fontSize ? fontSize * 0.6 : Math.max(6, width * 0.12);
   if (!faceUp) {
     return (
       <View style={[styles.card, { width, height }, styles.cardBack]}>
@@ -45,9 +54,9 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140 }: C
     return (
       <View style={[styles.card, { width, height }, styles.jokerCard]}>
         <View style={styles.jokerCenter}>
-          <Text style={styles.jokerSymbol}>🃏</Text>
-          <Text style={styles.jokerText}>{rankDisplay[rank]} Joker</Text>
-          <Text style={styles.jokerPoint}>1 point</Text>
+          <Text style={[styles.jokerSymbol, { fontSize: jokerSymbolSize }]}>🃏</Text>
+          <Text style={[styles.jokerText, { fontSize: jokerTextSize }]}>{rankDisplay[rank]} Joker</Text>
+          <Text style={[styles.jokerPoint, { fontSize: jokerPointSize }]}>1 point</Text>
         </View>
       </View>
     );
@@ -56,16 +65,16 @@ export function Card({ suit, rank, faceUp = true, width = 100, height = 140 }: C
   return (
     <View style={[styles.card, { width, height }]}>
       <View style={styles.cardCorner}>
-        <Text style={[styles.rankText, { color: suitColors[suit] }]}>{rankDisplay[rank]}</Text>
-        <Text style={[styles.suitText, { color: suitColors[suit] }]}>{suitSymbols[suit]}</Text>
+        <Text style={[styles.rankText, { color: suitColors[suit], fontSize: rankSize }]}>{rankDisplay[rank]}</Text>
+        <Text style={[styles.suitText, { color: suitColors[suit], fontSize: suitSize }]}>{suitSymbols[suit]}</Text>
       </View>
       <View style={styles.cardCenter}>
-        <Text style={[styles.centerSymbol, { color: suitColors[suit] }]}>{suitSymbols[suit]}</Text>
-        <Text style={[styles.centerRank, { color: suitColors[suit] }]}>{rankDisplay[rank]}</Text>
+        <Text style={[styles.centerSymbol, { color: suitColors[suit], fontSize: centerSymbolSize }]}>{suitSymbols[suit]}</Text>
+        <Text style={[styles.centerRank, { color: suitColors[suit], fontSize: centerRankSize }]}>{rankDisplay[rank]}</Text>
       </View>
       <View style={[styles.cardCorner, styles.cardCornerBottom]}>
-        <Text style={[styles.rankText, { color: suitColors[suit], transform: [{ rotate: '180deg' }] }]}>{rankDisplay[rank]}</Text>
-        <Text style={[styles.suitText, { color: suitColors[suit], transform: [{ rotate: '180deg' }] }]}>{suitSymbols[suit]}</Text>
+        <Text style={[styles.rankText, { color: suitColors[suit], fontSize: rankSize, transform: [{ rotate: '180deg' }] }]}>{rankDisplay[rank]}</Text>
+        <Text style={[styles.suitText, { color: suitColors[suit], fontSize: suitSize, transform: [{ rotate: '180deg' }] }]}>{suitSymbols[suit]}</Text>
       </View>
     </View>
   );
@@ -101,11 +110,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   rankText: {
-    fontSize: 20,
     fontWeight: 'bold',
   },
   suitText: {
-    fontSize: 16,
     marginTop: -4,
   },
   cardCenter: {
@@ -114,11 +121,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   centerSymbol: {
-    fontSize: 48,
     fontWeight: 'bold',
   },
   centerRank: {
-    fontSize: 24,
     fontWeight: 'bold',
     marginTop: 4,
   },
@@ -133,17 +138,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   jokerSymbol: {
-    fontSize: 48,
     marginBottom: 8,
   },
   jokerText: {
-    fontSize: 16,
     fontWeight: 'bold',
     color: '#7c3aed', // purple-600
     marginBottom: 4,
   },
   jokerPoint: {
-    fontSize: 12,
     color: '#dc2626', // red-600
     fontWeight: '600',
   },
