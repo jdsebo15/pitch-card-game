@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     position: 'absolute',
-    top: 20,
+    top: 60,
     right: 20,
     backgroundColor: 'rgba(239, 68, 68, 0.8)',
     paddingHorizontal: 16,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   debugButton: {
     position: 'absolute',
-    top: 20,
+    top: 60,
     right: 80,
     backgroundColor: 'rgba(59, 130, 246, 0.8)',
     width: 36,
