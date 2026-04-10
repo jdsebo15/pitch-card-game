@@ -93,7 +93,11 @@ export class PitchGame {
   private getNextNonPassedPlayer(playerId: string): string {
     let nextId = this.getLeftPlayerId(playerId);
     // Skip passed players
-    while (this.passedPlayers.has(nextId) && nextId !== this.state.bidder) {
+    while (this.passedPlayers.has(nextId)) {
+      // If we've gone full circle and everyone else passed, return bidder (auction ends)
+      if (nextId === this.state.bidder) {
+        return nextId;
+      }
       nextId = this.getLeftPlayerId(nextId);
     }
     return nextId;
