@@ -44,11 +44,16 @@ export function DiscardingScreen({
     if (cardsDiscarded >= cardsToDiscard) return false;
     
     const cardIsTrump = isTrump(card);
-    const isPoint = isPointCard(card);
-    const trumpCount = playerHand.filter(isTrump).length;
 
-    if (cardIsTrump && isPoint) return false;
-    if (cardIsTrump && trumpCount <= 6) return false;
+    // Non-trump: always discardable
+    if (!cardIsTrump) return true;
+
+    // Trump: only if you have more than 6 trump
+    const trumpCount = playerHand.filter(isTrump).length;
+    if (trumpCount <= 6) return false;
+
+    // Trump point cards: never discardable
+    if (isPointCard(card)) return false;
 
     return true;
   };

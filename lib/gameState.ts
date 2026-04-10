@@ -192,18 +192,19 @@ export class PitchGame {
     if (!this.state.trumpSuit) return false;
     
     const player = this.state.players.find(p => p.id === playerId)!;
-    
     const isTrump = this.isTrump(card);
-    const isPointCard = this.isPointCard(card);
-    const trumpCards = player.hand.filter(c => this.isTrump(c));
 
-    // Can't discard trump point cards
-    if (isTrump && isPointCard) return false;
-    
-    // Can only discard trump if you have more than 6 trump cards
-    if (isTrump && trumpCards.length <= 6) return false;
-    
-    // Non-trump point cards CAN be discarded
+    // Non-trump cards can always be discarded
+    if (!isTrump) return true;
+
+    // Trump cards: can only discard if you have more than 6 trump
+    const trumpCards = player.hand.filter(c => this.isTrump(c));
+    if (trumpCards.length <= 6) return false;
+
+    // Even with >6 trump, can't discard trump point cards
+    const isPointCard = this.isPointCard(card);
+    if (isPointCard) return false;
+
     return true;
   }
   
