@@ -312,7 +312,6 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       
       {/* Phase-specific UI */}
       {gameState.phase === 'choosing-trump' && renderTrumpUI()}
-      {gameState.phase === 'discarding' && renderDiscardUI()}
       {gameState.phase === 'selecting-kitty' && renderKittyUI()}
       
       {/* Debug overlay */}

@@ -152,6 +152,9 @@ export class PitchGame {
     this.state.trumpSuit = suit;
     this.state.phase = 'discarding';
     this.state.currentPlayer = this.state.bidder;
+    
+    // Auto-complete discarding phase immediately
+    this.completeDiscardingPhase();
     return true;
   }
 
@@ -178,13 +181,8 @@ export class PitchGame {
     player.hand.splice(cardIndex, 1);
     this.discards.get(playerId)!.push(card);
     
-    // After bidder discards enough to reach 6 cards or less, move to selecting-kitty
-    const playerDiscards = this.discards.get(playerId)!.length;
-    const handSize = player.hand.length;
-    // If player has 6 or fewer cards, they can finish discarding
-    if (handSize <= 6) {
-      this.completeDiscardingPhase();
-    }
+    // Discard phase is now automatic, so this shouldn't be called manually
+    // (keeping the function for completeness)
     
     return true;
   }
@@ -216,11 +214,51 @@ export class PitchGame {
     const bidder = this.state.players.find(p => p.id === this.state.bidder!);
     if (!bidder) return;
 
-    this.bidderPool = [...bidder.hand, ...this.kitty];
-    this.kitty = [];
+    // 1. Non-bidders discard all non-trump cards
+    for (const player of this.state.players) {
+      if (player.id === this.state.bidder!) continue;
+      
+      // Discard all non-trump cards
+      const nonTrumpCards = player.hand.filter(card => !this.isTrump(card));
+      for (const card of nonTrumpCards) {
+        this.discardCard(player.id, card.id);
+      }
+      
+      // Draw from pool to get back to 6 cards
+      while (player.hand.length < 6 && this.kitty.length > 0) {
+        const drawn = this.kitty.pop();
+        if (drawn) player.hand.push(drawn);
+      }
+    }
 
-    this.state.phase = 'selecting-kitty';
-    this.state.currentPlayer = this.state.bidder!;
+    // 2. Bidder gets best 6 cards from hand + pool leftovers
+    const allCards = [...bidder.hand, ...this.kitty];
+    // Sort by value (highest first)
+    allCards.sort((a, b) => 
+      getCardValue(b, this.state.trumpSuit) - getCardValue(a, this.state.trumpSuit)
+    );
+    
+    // Take top 6
+    bidder.hand = allCards.slice(0, 6);
+    this.kitty = allCards.slice(6);
+    
+    // 3. If bidder still has <6 cards, draw from discards (shouldn't happen)
+    if (bidder.hand.length < 6) {
+      // Collect all discards
+      const allDiscards: GameCard[] = [];
+      for (const discards of this.discards.values()) {
+        allDiscards.push(...discards);
+      }
+      
+      while (bidder.hand.length < 6 && allDiscards.length > 0) {
+        const drawn = allDiscards.pop();
+        if (drawn) bidder.hand.push(drawn);
+      }
+    }
+
+    // Move to playing phase
+    this.state.phase = 'playing';
+    this.state.currentPlayer = this.state.bidder!; // Bidder leads first trick
   }
   
   private handlePointCardPassing() {
@@ -426,23 +464,7 @@ export class PitchGame {
   }
 
   private makeAIDiscard(playerId: string): void {
-    // Discard all 3 cards at once so we don't get stuck waiting for re-renders
-    for (let i = 0; i < 3; i++) {
-      if (this.state.phase !== 'discarding') break;
-
-      const player = this.state.players.find(p => p.id === playerId)!;
-      const discardableCards = player.hand.filter(card =>
-        this.canDiscardCard(playerId, card)
-      );
-
-      if (discardableCards.length === 0) break;
-
-      discardableCards.sort((a, b) =>
-        getCardValue(a, this.state.trumpSuit) - getCardValue(b, this.state.trumpSuit)
-      );
-
-      this.discardCard(playerId, discardableCards[0].id);
-    }
+    // Discard phase is now automatic, so AI doesn't need to do anything
   }
   
   private makeAIBid(playerId: string): void {
