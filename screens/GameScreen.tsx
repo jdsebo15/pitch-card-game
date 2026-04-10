@@ -545,7 +545,7 @@ const phaseStyles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     padding: 16,
     borderRadius: 12,
-    minWidth: 80,
+    width: 80,
   },
   suitSymbol: {
     fontSize: 48,
