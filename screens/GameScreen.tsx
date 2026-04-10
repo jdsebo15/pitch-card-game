@@ -455,14 +455,15 @@ const overlayStyles = StyleSheet.create({
 const biddingStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    bottom: 160, // Higher up to avoid covering South's hand
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    padding: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
   },
   title: {
     color: '#fff',
@@ -510,14 +511,15 @@ const biddingStyles = StyleSheet.create({
 const phaseStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 160, // Higher up to avoid covering South's hand
+    left: 20,
+    right: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    padding: 24,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#10b981',
   },
   title: {
     color: '#fff',
