@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { GameTable } from '../components/GameTable';
 import { BiddingScreen } from '../components/BiddingScreen';
 import { DiscardingScreen } from '../components/DiscardingScreen';
@@ -154,7 +154,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   
   // Render playing phase
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <GameTable
         players={playerPositions}
         playerHands={gameState.players.reduce((acc, p) => ({
@@ -261,7 +261,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         scores={gameState.scores}
         teamScores={gameState.teamScores}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -269,6 +269,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a202c',
+    paddingTop: 0,
   },
   playerHandContainer: {
     position: 'absolute',
@@ -341,6 +342,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    paddingTop: 60,
   },
   phaseTitle: {
     color: '#fff',

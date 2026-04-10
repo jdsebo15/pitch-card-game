@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
 import { Card } from './Card';
 import { GameCard } from '../lib/game';
 
@@ -125,7 +125,7 @@ export function GameTable({
   };
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView style={styles.root}>
       {/* ── Green felt table ── */}
       <View style={styles.felt}>
 
@@ -211,7 +211,7 @@ export function GameTable({
           <PlayerBadge player={south} />
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
