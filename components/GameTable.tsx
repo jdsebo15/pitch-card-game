@@ -44,11 +44,17 @@ function PlayerBadge({
   const teamColor = player.team === 0 ? '#10b981' : '#3b82f6';
   return (
     <View style={[badgeStyles.badge, player.isCurrent && badgeStyles.active, { alignItems: align, borderColor: player.isCurrent ? '#6366f1' : teamColor }]}>
-      <Text style={badgeStyles.name}>
-        {player.name}
-        {player.isDealer ? ' 🃏' : ''}
-        {player.isBidder ? ' ⭐' : ''}
-      </Text>
+      <View style={badgeStyles.nameRow}>
+        <Text style={badgeStyles.name}>
+          {player.name}
+          {player.isBidder ? ' ⭐' : ''}
+        </Text>
+        {player.isDealer && (
+          <View style={badgeStyles.dealerChip}>
+            <Text style={badgeStyles.dealerText}>D</Text>
+          </View>
+        )}
+      </View>
       <Text style={[badgeStyles.sub, { color: teamColor }]}>
         {player.handCount} cards · {player.score} pts
       </Text>
@@ -314,11 +320,31 @@ const badgeStyles = StyleSheet.create({
     backgroundColor: 'rgba(99,102,241,0.85)',
     borderColor: '#818cf8',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   name: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
-    textAlign: 'center',
+  },
+  dealerChip: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#f59e0b',
+    borderWidth: 2,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dealerText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   sub: {
     fontSize: 11,
