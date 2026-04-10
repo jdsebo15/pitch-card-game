@@ -439,15 +439,17 @@ const overlayStyles = StyleSheet.create({
 const biddingStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 160, // Higher up to avoid covering South's hand
-    left: 20,
-    right: 20,
+    top: '30%', // Center vertically
+    left: '10%',
+    right: '10%',
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#3b82f6',
+    maxWidth: 300,
+    alignSelf: 'center',
   },
   title: {
     color: '#fff',
