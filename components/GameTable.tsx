@@ -373,12 +373,13 @@ const infoStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
+    maxWidth: 180,
   },
   scoreColumn: {
-    gap: 4,
+    gap: 2,
   },
   infoColumn: {
-    gap: 4,
+    gap: 2,
   },
   teamChip: {
     flexDirection: 'row',
