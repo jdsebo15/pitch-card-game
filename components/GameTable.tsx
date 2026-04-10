@@ -137,9 +137,10 @@ export function GameTable({
       {/* ── Green felt table ── */}
       <View style={styles.felt}>
 
-        {/* ── Score / trump overlay (top-left corner of felt) ── */}
-        <View style={infoStyles.overlay}>
-          <View style={infoStyles.row}>
+        {/* ── Compact score/trump/bid overlay (top-left) ── */}
+        <View style={infoStyles.compactOverlay}>
+          {/* Left column: NS/EW scores stacked */}
+          <View style={infoStyles.scoreColumn}>
             <View style={[infoStyles.teamChip, { borderColor: '#10b981' }]}>
               <Text style={[infoStyles.teamLabel, { color: '#10b981' }]}>NS</Text>
               <Text style={infoStyles.teamScore}>{teamScores[0]}</Text>
@@ -149,12 +150,15 @@ export function GameTable({
               <Text style={infoStyles.teamScore}>{teamScores[1]}</Text>
             </View>
           </View>
-          {trumpSuit && <TrumpBadge trumpSuit={trumpSuit} />}
-          {currentBid != null && (
-            <View style={infoStyles.bidChip}>
-              <Text style={infoStyles.bidText}>Bid: {currentBid}</Text>
-            </View>
-          )}
+          {/* Right column: Trump + Bid */}
+          <View style={infoStyles.infoColumn}>
+            {trumpSuit && <TrumpBadge trumpSuit={trumpSuit} />}
+            {currentBid != null && (
+              <View style={infoStyles.bidChip}>
+                <Text style={infoStyles.bidText}>Bid: {currentBid}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* ── NORTH ── */}
@@ -357,16 +361,19 @@ const badgeStyles = StyleSheet.create({
 
 /* ─── score / trump info styles ─── */
 const infoStyles = StyleSheet.create({
-  overlay: {
+  compactOverlay: {
     position: 'absolute',
     top: 10,
     left: 10,
-    gap: 6,
+    flexDirection: 'row',
+    gap: 8,
     zIndex: 10,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 6,
+  scoreColumn: {
+    gap: 4,
+  },
+  infoColumn: {
+    gap: 4,
   },
   teamChip: {
     flexDirection: 'row',
