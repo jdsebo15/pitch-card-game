@@ -180,7 +180,9 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
             {gameState.trumpSuit ? 
               (gameState.trumpSuit === 'hearts' ? '♥ Hearts' :
                gameState.trumpSuit === 'diamonds' ? '♦ Diamonds' :
-               gameState.trumpSuit === 'clubs' ? '♣ Clubs' : '♠ Spades') : 
+               gameState.trumpSuit === 'clubs' ? '♣ Clubs' : 
+               gameState.trumpSuit === 'spades' ? '♠ Spades' :
+               '🃏 Joker') : 
               'Not set'}
           </Text>
         </View>

@@ -1,5 +1,5 @@
-export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
-export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
+export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker';
+export type Rank = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A' | 'big' | 'little';
 
 export interface GameCard {
   suit: Suit;
@@ -37,6 +37,7 @@ export function createDeck(): GameCard[] {
   
   const deck: GameCard[] = [];
   
+  // Standard 52 cards
   for (const suit of suits) {
     for (const rank of ranks) {
       deck.push({
@@ -46,6 +47,10 @@ export function createDeck(): GameCard[] {
       });
     }
   }
+  
+  // Add jokers (2 total)
+  deck.push({ suit: 'joker', rank: 'big', id: 'joker-big' });
+  deck.push({ suit: 'joker', rank: 'little', id: 'joker-little' });
   
   return deck;
 }
@@ -99,7 +104,9 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
     'J': 12,  // Jack (will be adjusted for trump)
     'Q': 13,  // Q0
     'K': 14,  // K0  
-    'A': 15,  // A1 (highest non-trump-special)
+    'A': 15,  // A1
+    'little': 16, // Little joker
+    'big': 17,    // Big joker
   };
   
   let value = baseRankValues[card.rank];
@@ -110,12 +117,19 @@ export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
     value += 20; // Boost trump cards above non-trump
     
     // Special trump rankings:
-    if (card.rank === 'J') return 40; // Main jack (highest)
-    if (card.rank === 'A') return 39; // Ace of trump
-    if (card.rank === 'K') return 38; // King of trump
-    if (card.rank === 'Q') return 37; // Queen of trump
+    if (card.rank === 'J') return 45; // Main jack (highest)
+    if (card.rank === 'A') return 44; // Ace of trump
+    if (card.rank === 'K') return 43; // King of trump
+    if (card.rank === 'Q') return 42; // Queen of trump
     if (card.rank === '2') return 21; // 2 of trump (auto-keep, but low rank)
     // Other trump cards keep their boosted value
+  }
+  
+  // Jokers (always trump in some variations)
+  if (card.suit === 'joker') {
+    // Jokers rank between main jack and off jack
+    if (card.rank === 'big') return 41;    // Big joker
+    if (card.rank === 'little') return 40; // Little joker
   }
   
   // Handle off-jack (jack of same color as trump)
@@ -205,10 +219,11 @@ export function calculatePoints(trick: Trick, trumpSuit: Suit): number {
     
     if (card.suit === trumpSuit && card.rank === 'J') points += 1; // Main jack 1
     
-    // Note: Jokers not in standard deck - would need to add them
-    // Big joker = 1 point
-    // Off jack (jack of same color) = 1 point  
-    // Little joker = 1 point
+    // Jokers
+    if (card.rank === 'big') points += 1;    // Big joker 1
+    if (card.rank === 'little') points += 1; // Little joker 1
+    
+    // Off jack (jack of same color as trump) = 1 point
     
     if (card.rank === '10') points += 1;        // 10-1
     if (card.rank === '3') points += 3;         // 3-3

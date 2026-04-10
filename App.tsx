@@ -34,11 +34,13 @@ export default function App() {
                 2. 🇰 King = 0 points{'\n'}
                 3. 🇶 Queen = 0 points{'\n'}
                 4. 🎃 Main Jack (trump) = 1 point{'\n'}
-                5. 🃏 Off Jack (same color) = 1 point{'\n'}
-                6. 🔟 10 = 1 point{'\n'}
-                7. 9, 8, 7, 6, 5, 4 = 0 points{'\n'}
-                8. 3️⃣ 3 = 3 points{'\n'}
-                9. 2️⃣ 2 = 1 point (auto-keep){'\n'}{'\n'}
+                5. 🃏 Big Joker = 1 point{'\n'}
+                6. 🃏 Little Joker = 1 point{'\n'}
+                7. 🎭 Off Jack (same color) = 1 point{'\n'}
+                8. 🔟 10 = 1 point{'\n'}
+                9. 9, 8, 7, 6, 5, 4 = 0 points{'\n'}
+                10. 3️⃣ 3 = 3 points{'\n'}
+                11. 2️⃣ 2 = 1 point (auto-keep){'\n'}{'\n'}
                 Note: 2 of trump is automatically kept by whoever catches it, even if they don't win the trick.
               </Text>
               

@@ -18,7 +18,7 @@ interface PlayerPosition {
 interface GameTableProps {
   players: PlayerPosition[];
   centerCards?: Array<{ card: GameCard; playerId: string }>;
-  trumpSuit?: 'hearts' | 'diamonds' | 'clubs' | 'spades' | null;
+  trumpSuit?: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker' | null;
   currentBid?: number | null;
 }
 
@@ -54,8 +54,8 @@ export function GameTable({ players, centerCards = [], trumpSuit, currentBid }: 
           <View style={styles.trumpIndicator}>
             <Text style={styles.trumpText}>Trump: </Text>
             <View style={styles.trumpSuit}>
-              <Text style={[styles.trumpSuitText, { color: trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : '#000' }]}>
-                {trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : '♠'}
+              <Text style={[styles.trumpSuitText, { color: trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : trumpSuit === 'joker' ? '#7c3aed' : '#000' }]}>
+                {trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : trumpSuit === 'spades' ? '♠' : '🃏'}
               </Text>
             </View>
           </View>
