@@ -374,7 +374,7 @@ const infoStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
     maxWidth: 160,
-    maxHeight: 80,
+    height: 72, // 28 + 2 + 28 + 8 + 8 (padding)
   },
   scoreColumn: {
     gap: 2,
@@ -388,9 +388,11 @@ const infoStyles = StyleSheet.create({
     gap: 2,
     backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
+    height: 28,
+    justifyContent: 'center',
   },
   teamLabel: {
     fontSize: 10,
@@ -409,6 +411,8 @@ const infoStyles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    height: 28,
+    justifyContent: 'center',
   },
   trumpLabel: {
     color: '#d1d5db',
@@ -425,6 +429,9 @@ const infoStyles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bidText: {
     color: '#fff',
