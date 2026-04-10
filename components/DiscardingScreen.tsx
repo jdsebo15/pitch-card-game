@@ -233,7 +233,7 @@ export function DiscardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a202c',
+    backgroundColor: '#ff69b4',
     padding: 20,
   },
   header: {
