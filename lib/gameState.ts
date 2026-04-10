@@ -21,10 +21,10 @@ export class PitchGame {
     // Assuming positions: North (player-2) and South (player-1) are team 0
     // East (player-3) and West (player-4) are team 1
     const players: Player[] = [
-      { id: 'player-1', name: 'You', hand: hands[0], isHuman: true, team: 0 }, // South
-      { id: 'player-2', name: 'AI North', hand: hands[1], isHuman: false, team: 0 }, // North
-      { id: 'player-3', name: 'AI East', hand: hands[2], isHuman: false, team: 1 }, // East
-      { id: 'player-4', name: 'AI West', hand: hands[3], isHuman: false, team: 1 }, // West
+      { id: 'player-1', name: 'South', hand: hands[0], isHuman: true, team: 0 }, // South
+      { id: 'player-2', name: 'North', hand: hands[1], isHuman: true, team: 0 }, // North
+      { id: 'player-3', name: 'East', hand: hands[2], isHuman: true, team: 1 }, // East
+      { id: 'player-4', name: 'West', hand: hands[3], isHuman: true, team: 1 }, // West
     ];
     
     // Initialize per-hand state

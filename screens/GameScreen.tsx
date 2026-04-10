@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GameTable } from '../components/GameTable';
 import { BiddingScreen } from '../components/BiddingScreen';
@@ -16,8 +16,9 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   
-  const player = gameState.players.find(p => p.id === 'player-1')!;
+  // In 4-human mode, always show the current player's hand
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer)!;
+  const player = currentPlayer; // alias — hand shown is always the active player's
   
   const playerPositions = gameState.players.map((p, index) => ({
     id: p.id,
@@ -54,92 +55,34 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   }, [game, gameState.players, onGameEnd]);
   
-  useEffect(() => {
-    updateGameState();
-    
-    // AI turn handling with natural random delays
-    if (!currentPlayer.isHuman && gameState.phase !== 'scoring') {
-      // Different delays for different phases to feel natural
-      let baseDelay = 800; // ms
-      
-      if (gameState.phase === 'bidding') {
-        // Bidding: quick decisions (0.8-1.5s)
-        baseDelay = 800 + Math.random() * 700;
-      } else if (gameState.phase === 'choosing-trump') {
-        // Trump selection: medium thinking (1-2s)
-        baseDelay = 1000 + Math.random() * 1000;
-      } else if (gameState.phase === 'discarding') {
-        // Discarding: quick but thoughtful (0.5-1.2s)
-        baseDelay = 500 + Math.random() * 700;
-      } else if (gameState.phase === 'selecting-kitty') {
-        // Kitty selection: careful consideration (1.5-3s)
-        baseDelay = 1500 + Math.random() * 1500;
-      } else if (gameState.phase === 'playing') {
-        // Playing cards: varies by situation (0.6-2s)
-        const currentTrick = gameState.tricks[gameState.tricks.length - 1];
-        const trickCards = currentTrick?.cards || [];
-        
-        if (trickCards.length === 0) {
-          // Leading: quick decision (0.6-1.2s)
-          baseDelay = 600 + Math.random() * 600;
-        } else if (trickCards.length === 3) {
-          // Last to play: quick (0.5-1s)
-          baseDelay = 500 + Math.random() * 500;
-        } else {
-          // Middle of trick: medium thinking (0.8-1.8s)
-          baseDelay = 800 + Math.random() * 1000;
-        }
-      }
-      
-      const timer = setTimeout(() => {
-        game.makeAIMove(currentPlayer.id);
-        updateGameState();
-      }, baseDelay);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentPlayer, gameState.phase, game, updateGameState]);
   
   const handlePlaceBid = (bid: number) => {
-    const success = game.placeBid('player-1', bid);
-    if (success) {
-      updateGameState();
-    }
+    const success = game.placeBid(gameState.currentPlayer, bid);
+    if (success) updateGameState();
   };
-  
+
   const handlePass = () => {
-    // Pass is represented as bid 0
-    const success = game.placeBid('player-1', 0);
-    if (success) {
-      updateGameState();
-    }
+    const success = game.placeBid(gameState.currentPlayer, 0);
+    if (success) updateGameState();
   };
-  
+
   const handleChooseTrump = (suit: Suit) => {
-    const success = game.chooseTrump('player-1', suit);
-    if (success) {
-      updateGameState();
-    }
+    const success = game.chooseTrump(gameState.currentPlayer, suit);
+    if (success) updateGameState();
   };
 
   const handleDiscardCard = (cardId: string) => {
-    const success = game.discardCard('player-1', cardId);
-    if (success) {
-      updateGameState();
-    }
+    const success = game.discardCard(gameState.currentPlayer, cardId);
+    if (success) updateGameState();
   };
 
   const handleConfirmBidderHand = (cardIds: string[]) => {
-    const success = game.confirmBidderHand('player-1', cardIds);
-    if (success) {
-      updateGameState();
-    }
+    const success = game.confirmBidderHand(gameState.currentPlayer, cardIds);
+    if (success) updateGameState();
   };
-  
+
   const handlePlayCard = (cardId: string) => {
-    if (gameState.currentPlayer !== 'player-1') return;
-    
-    const success = game.playCard('player-1', cardId);
+    const success = game.playCard(gameState.currentPlayer, cardId);
     if (success) {
       setSelectedCard(null);
       updateGameState();
@@ -147,7 +90,7 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
   };
   
   const handleCardSelect = (cardId: string) => {
-    if (gameState.currentPlayer !== 'player-1' || gameState.phase !== 'playing') return;
+    if (gameState.phase !== 'playing') return;
     setSelectedCard(cardId === selectedCard ? null : cardId);
   };
   
@@ -157,11 +100,11 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
     }
   };
   
-  // Render bidding phase
+  // Render bidding phase — current player bids
   if (gameState.phase === 'bidding') {
     return (
       <BiddingScreen
-        playerHand={player.hand}
+        playerHand={currentPlayer.hand}
         currentBid={gameState.bid}
         currentPlayer={gameState.currentPlayer}
         playerName={currentPlayer.name}
@@ -170,67 +113,42 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       />
     );
   }
-  
+
+  // Trump selection — bidder picks trump
   if (gameState.phase === 'choosing-trump') {
-    if (gameState.currentPlayer === 'player-1') {
-      return (
-        <TrumpSelectionScreen
-          playerHand={player.hand}
-          forcedBid={gameState.forcedBid}
-          bid={gameState.bid}
-          onChooseTrump={handleChooseTrump}
-        />
-      );
-    }
-
     return (
-      <View style={styles.centeredPhaseScreen}>
-        <Text style={styles.phaseTitle}>Choosing Trump</Text>
-        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to choose trump...</Text>
-      </View>
+      <TrumpSelectionScreen
+        playerHand={currentPlayer.hand}
+        forcedBid={gameState.forcedBid}
+        bid={gameState.bid}
+        onChooseTrump={handleChooseTrump}
+      />
     );
   }
 
-  // Render discarding phase — only the bidder discards
+  // Discard phase — bidder discards 3
   if (gameState.phase === 'discarding') {
-    if (gameState.bidder === 'player-1') {
-      return (
-        <DiscardingScreen
-          playerHand={player.hand}
-          trumpSuit={gameState.trumpSuit}
-          currentPlayer={gameState.currentPlayer}
-          playerName={currentPlayer.name}
-          discards={game.getDiscards('player-1')}
-          onDiscardCard={handleDiscardCard}
-          onComplete={() => {}}
-        />
-      );
-    }
-    // AI is the bidder — show waiting screen (AI move fires via useEffect)
     return (
-      <View style={styles.centeredPhaseScreen}>
-        <Text style={styles.phaseTitle}>Discarding</Text>
-        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to discard...</Text>
-      </View>
+      <DiscardingScreen
+        playerHand={currentPlayer.hand}
+        trumpSuit={gameState.trumpSuit}
+        currentPlayer={gameState.currentPlayer}
+        playerName={currentPlayer.name}
+        discards={game.getDiscards(gameState.currentPlayer)}
+        onDiscardCard={handleDiscardCard}
+        onComplete={() => {}}
+      />
     );
   }
 
+  // Kitty selection — bidder picks final 6
   if (gameState.phase === 'selecting-kitty') {
-    if (gameState.currentPlayer === 'player-1') {
-      return (
-        <BidderHandSelectionScreen
-          cards={game.getBidderPool()}
-          trumpSuit={gameState.trumpSuit}
-          onConfirm={handleConfirmBidderHand}
-        />
-      );
-    }
-
     return (
-      <View style={styles.centeredPhaseScreen}>
-        <Text style={styles.phaseTitle}>Bidder Choosing Final Hand</Text>
-        <Text style={styles.waitingText}>Waiting for {currentPlayer.name} to lock in their 6 cards...</Text>
-      </View>
+      <BidderHandSelectionScreen
+        cards={game.getBidderPool()}
+        trumpSuit={gameState.trumpSuit}
+        onConfirm={handleConfirmBidderHand}
+      />
     );
   }
   
@@ -252,11 +170,11 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
       {/* Player hand */}
       <View style={styles.playerHandContainer}>
         <Text style={styles.handTitle}>
-          {gameState.currentPlayer === 'player-1' ? '🟢 Your turn' : `⏳ ${currentPlayer.name}'s turn`} • {player.hand.length} cards
+          🟢 {currentPlayer.name}'s turn • {currentPlayer.hand.length} cards
         </Text>
         
         <View style={styles.handCards}>
-          {player.hand.map((card) => (
+          {currentPlayer.hand.map((card) => (
             <TouchableOpacity
               key={card.id}
               style={[
@@ -264,7 +182,6 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
                 selectedCard === card.id && styles.cardSelected,
               ]}
               onPress={() => handleCardSelect(card.id)}
-              disabled={gameState.currentPlayer !== 'player-1'}
             >
               <Card
                 suit={card.suit}
@@ -277,19 +194,13 @@ export function GameScreen({ onGameEnd }: { onGameEnd: () => void }) {
         </View>
         
         {/* Play button */}
-        {gameState.currentPlayer === 'player-1' && selectedCard && (
+        {selectedCard && (
           <TouchableOpacity
             style={styles.playButton}
             onPress={handlePlaySelectedCard}
           >
             <Text style={styles.playButtonText}>Play Selected Card</Text>
           </TouchableOpacity>
-        )}
-        
-        {gameState.currentPlayer !== 'player-1' && (
-          <Text style={styles.waitingText}>
-            Waiting for {currentPlayer.name} to play...
-          </Text>
         )}
       </View>
       
