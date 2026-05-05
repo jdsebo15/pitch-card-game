@@ -1,227 +1,102 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Card } from './Card';
-import { GameCard, getCardPoints, isOffJack, isTrumpCard } from '../lib/game';
+import { GameCard, Suit, isTrumpCard, isOffJack, getCardPoints, sortCards } from '../lib/game';
 
 interface DiscardingScreenProps {
-  playerHand: GameCard[];
-  trumpSuit: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker' | null;
-  currentPlayer: string;
-  playerName: string;
-  discards: GameCard[];
-  onDiscardCard: (cardId: string) => void;
-  onComplete: () => void;
+  pool: GameCard[];
+  trumpSuit: Suit | null;
+  keepCount?: number;
+  onConfirm: (keepIds: string[]) => void;
 }
 
-export function DiscardingScreen({
-  playerHand,
-  trumpSuit,
-  currentPlayer,
-  playerName,
-  discards,
-  onDiscardCard,
-  onComplete,
-}: DiscardingScreenProps) {
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  
-  const isPlayerTurn = currentPlayer === 'player-1';
-  const cardsToDiscard = 3;
-  const cardsDiscarded = discards.length;
-  const cardsRemaining = cardsToDiscard - cardsDiscarded;
-  
-  const isPointCard = (card: GameCard): boolean => {
-    if (!trumpSuit || trumpSuit === 'joker') return false;
-    return getCardPoints(card, trumpSuit) > 0;
+export function DiscardingScreen({ pool, trumpSuit, keepCount = 6, onConfirm }: DiscardingScreenProps) {
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    // Pre-select all trump cards (they're locked anyway). The user picks the
+    // remainder from non-trump options.
+    const initial = new Set<string>();
+    for (const card of pool) {
+      if (trumpSuit && isTrumpCard(card, trumpSuit)) initial.add(card.id);
+    }
+    return initial;
+  });
+
+  const sorted = sortCards(pool, trumpSuit);
+
+  const toggle = (cardId: string, locked: boolean) => {
+    if (locked) return;
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(cardId)) next.delete(cardId);
+      else if (next.size < keepCount) next.add(cardId);
+      return next;
+    });
   };
-  
-  const isTrump = (card: GameCard): boolean => {
-    if (!trumpSuit || trumpSuit === 'joker') return false;
+
+  const isLocked = (card: GameCard) => {
+    if (!trumpSuit) return false;
     return isTrumpCard(card, trumpSuit);
   };
-  
-  const canDiscardCard = (card: GameCard): boolean => {
-    if (!isPlayerTurn) return false;
-    if (cardsDiscarded >= cardsToDiscard) return false;
-    
-    const cardIsTrump = isTrump(card);
 
-    // Non-trump: always discardable
-    if (!cardIsTrump) return true;
+  const tag = (card: GameCard) => {
+    if (!trumpSuit) return '';
+    if (isOffJack(card, trumpSuit)) return 'Off-Jack';
+    if (card.suit === 'joker') return 'Joker';
+    if (isTrumpCard(card, trumpSuit) && getCardPoints(card, trumpSuit) > 0) return 'Trump pt';
+    if (isTrumpCard(card, trumpSuit)) return 'Trump';
+    return '';
+  };
 
-    // Trump: only if you have more than 6 trump
-    const trumpCount = playerHand.filter(isTrump).length;
-    if (trumpCount <= 6) return false;
+  const remaining = keepCount - selected.size;
+  const canConfirm = selected.size === keepCount;
 
-    // Trump point cards: never discardable
-    if (isPointCard(card)) return false;
-
-    return true;
-  };
-  
-  const handleCardSelect = (cardId: string) => {
-    if (!isPlayerTurn) return;
-    
-    const card = playerHand.find(c => c.id === cardId);
-    if (!card || !canDiscardCard(card)) return;
-    
-    setSelectedCard(cardId === selectedCard ? null : cardId);
-  };
-  
-  const handleDiscardSelected = () => {
-    if (selectedCard) {
-      onDiscardCard(selectedCard);
-      setSelectedCard(null);
-    }
-  };
-  
-  const getCardStatus = (card: GameCard): string => {
-    const cardIsTrump = isTrump(card);
-    const isPoint = isPointCard(card);
-    
-    if (cardIsTrump && isPoint) {
-      return isOffJack(card, trumpSuit === 'joker' ? null : trumpSuit) ? 'Off-Jack (Cannot Discard)' : 'Trump Point Card (Cannot Discard)';
-    }
-    if (cardIsTrump) {
-      return 'Trump Card';
-    }
-    if (isPoint) {
-      return 'Point Card (Can Discard)';
-    }
-    return 'Safe to Discard';
-  };
-  
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Discarding Phase</Text>
-        <Text style={styles.subtitle}>
-          {isPlayerTurn ? 'Your turn to discard' : `${playerName}'s turn`}
+      <Text style={styles.title}>Pick your final {keepCount} cards</Text>
+      <Text style={styles.subtitle}>
+        {remaining > 0
+          ? `Tap ${remaining} more card${remaining !== 1 ? 's' : ''} to keep • trump locked in`
+          : 'Hand looks good — tap Confirm'}
+      </Text>
+
+      <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
+        {sorted.map(card => {
+          const picked = selected.has(card.id);
+          const locked = isLocked(card);
+          const label = tag(card);
+          return (
+            <TouchableOpacity
+              key={card.id}
+              activeOpacity={locked ? 1 : 0.7}
+              onPress={() => toggle(card.id, locked)}
+              style={[
+                styles.cardSlot,
+                picked && styles.cardKept,
+                !picked && !locked && styles.cardDropped,
+                locked && styles.cardLocked,
+              ]}
+            >
+              <Card suit={card.suit} rank={card.rank} width={56} height={80} />
+              {label ? <Text style={styles.tag}>{label}</Text> : null}
+              {!picked && !locked && (
+                <View style={styles.crossOverlay}>
+                  <Text style={styles.crossText}>discard</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <TouchableOpacity
+        style={[styles.confirm, !canConfirm && styles.confirmDisabled]}
+        onPress={() => canConfirm && onConfirm(Array.from(selected))}
+        disabled={!canConfirm}
+      >
+        <Text style={styles.confirmText}>
+          {canConfirm ? 'Confirm hand' : `Select ${remaining} more`}
         </Text>
-        
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>
-            Discard {cardsRemaining} more card{cardsRemaining !== 1 ? 's' : ''} ({cardsDiscarded}/3)
-          </Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[styles.progressFill, { width: `${(cardsDiscarded / cardsToDiscard) * 100}%` }]} 
-            />
-          </View>
-        </View>
-        
-        {trumpSuit && (
-          <View style={styles.trumpIndicator}>
-            <Text style={styles.trumpText}>Trump: </Text>
-            <Text style={[styles.trumpSuit, { color: trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : trumpSuit === 'joker' ? '#7c3aed' : '#000' }]}>
-              {trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : trumpSuit === 'spades' ? '♠' : '🃏'}
-            </Text>
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.handSection}>
-        <Text style={styles.sectionTitle}>
-          Your Hand ({playerHand.length} cards) • Select {cardsRemaining} to discard
-        </Text>
-        
-        <View style={styles.handContainer}>
-          {playerHand.map((card) => {
-            const canDiscard = canDiscardCard(card);
-            const isSelected = selectedCard === card.id;
-            const cardIsTrump = isTrump(card);
-            const isPoint = isPointCard(card);
-            
-            return (
-              <TouchableOpacity
-                key={card.id}
-                style={[
-                  styles.cardWrapper,
-                  !canDiscard && styles.cardDisabled,
-                  isSelected && styles.cardSelected,
-                  cardIsTrump && styles.cardTrump,
-                  isPoint && styles.cardPoint,
-                ]}
-                onPress={() => handleCardSelect(card.id)}
-                disabled={!canDiscard}
-              >
-                <Card suit={card.suit} rank={card.rank} width={70} height={98} />
-                <Text style={styles.cardStatus}>{getCardStatus(card)}</Text>
-                {!canDiscard && (
-                  <View style={styles.cannotDiscardOverlay}>
-                    <Text style={styles.cannotDiscardText}>✗</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        
-        {selectedCard && (
-          <TouchableOpacity
-            style={styles.discardButton}
-            onPress={handleDiscardSelected}
-          >
-            <Text style={styles.discardButtonText}>
-              Discard Selected Card
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-      
-      <View style={styles.discardsSection}>
-        <Text style={styles.sectionTitle}>
-          Your Discards ({discards.length}/3)
-        </Text>
-        
-        {discards.length > 0 ? (
-          <View style={styles.discardsContainer}>
-            {discards.map((card, index) => (
-              <View key={card.id} style={styles.discardedCard}>
-                <Card suit={card.suit} rank={card.rank} width={60} height={84} />
-                <Text style={styles.discardNumber}>#{index + 1}</Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.noDiscardsText}>No cards discarded yet</Text>
-        )}
-      </View>
-      
-      <View style={styles.rulesSection}>
-        <Text style={styles.rulesTitle}>Discarding Rules:</Text>
-        <View style={styles.rulesList}>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>📋</Text>
-            <Text style={styles.ruleText}>Discard 3 cards from your 9-card hand</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>🚫</Text>
-            <Text style={styles.ruleText}>Cannot discard trump unless you have more than 6 trump cards</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>🎯</Text>
-            <Text style={styles.ruleText}>Trump point cards cannot be discarded (A/J/2/10/3 of trump, jokers, off-jack)</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>🔄</Text>
-            <Text style={styles.ruleText}>If you have more than 6 point cards, one passes left automatically</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>🎴</Text>
-            <Text style={styles.ruleText}>Bidder then chooses the final 6 cards to keep</Text>
-          </View>
-          <View style={styles.ruleItem}>
-            <Text style={styles.ruleEmoji}>👑</Text>
-            <Text style={styles.ruleText}>Bidder gets remaining cards (kitty) after discarding</Text>
-          </View>
-        </View>
-      </View>
-      
-      {!isPlayerTurn && (
-        <Text style={styles.waitingText}>
-          Waiting for {playerName} to discard...
-        </Text>
-      )}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -229,192 +104,86 @@ export function DiscardingScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a202c',
-    padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#a0aec0',
-    marginBottom: 16,
-  },
-  progressContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  progressText: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  progressBar: {
-    width: 200,
-    height: 8,
-    backgroundColor: '#374151',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#10b981',
-    borderRadius: 4,
-  },
-  trumpIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(79, 70, 229, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  trumpText: {
     color: '#cbd5e0',
     fontSize: 14,
-  },
-  trumpSuit: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  handSection: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
+    textAlign: 'center',
+    marginTop: 4,
     marginBottom: 12,
   },
-  handContainer: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  cardWrapper: {
-    margin: 6,
-    alignItems: 'center',
-    borderRadius: 8,
-    padding: 4,
-    position: 'relative',
-  },
-  cardDisabled: {
-    opacity: 0.5,
-  },
-  cardSelected: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 2,
-    borderColor: '#10b981',
-  },
-  cardTrump: {
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-  },
-  cardPoint: {
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  cardStatus: {
-    color: '#cbd5e0',
-    fontSize: 10,
-    marginTop: 4,
-    textAlign: 'center',
-    maxWidth: 80,
-  },
-  cannotDiscardOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cannotDiscardText: {
-    color: '#ef4444',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  discardButton: {
-    backgroundColor: '#10b981',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignSelf: 'center',
-  },
-  discardButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  discardsSection: {
-    marginBottom: 30,
-  },
-  discardsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-  discardedCard: {
-    margin: 6,
-    alignItems: 'center',
-  },
-  discardNumber: {
-    color: '#a0aec0',
-    fontSize: 10,
-    marginTop: 4,
-  },
-  noDiscardsText: {
-    color: '#718096',
-    fontSize: 14,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  rulesSection: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  rulesTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  rulesList: {
     gap: 8,
+    paddingBottom: 12,
   },
-  ruleItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  cardSlot: {
+    padding: 4,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
   },
-  ruleEmoji: {
-    fontSize: 16,
-    marginRight: 8,
-    marginTop: 2,
+  cardKept: {
+    borderColor: '#10b981',
+    backgroundColor: 'rgba(16,185,129,0.15)',
   },
-  ruleText: {
+  cardDropped: {
+    opacity: 0.55,
+  },
+  cardLocked: {
+    borderColor: '#f59e0b',
+    backgroundColor: 'rgba(245,158,11,0.10)',
+  },
+  tag: {
     color: '#cbd5e0',
-    fontSize: 14,
-    flex: 1,
-    lineHeight: 20,
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '600',
+    letterSpacing: 0.4,
   },
-  waitingText: {
-    color: '#f59e0b',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 16,
+  crossOverlay: {
+    position: 'absolute',
+    top: 4,
+    bottom: 18,
+    left: 4,
+    right: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossText: {
+    color: '#fca5a5',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  confirm: {
+    backgroundColor: '#10b981',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  confirmDisabled: {
+    backgroundColor: '#374151',
+  },
+  confirmText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

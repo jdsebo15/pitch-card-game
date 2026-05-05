@@ -30,7 +30,7 @@ export interface GameState {
   tricks: Trick[];
   scores: Record<string, number>;
   teamScores: Record<number, number>;
-  phase: 'bidding' | 'choosing-trump' | 'discarding' | 'selecting-kitty' | 'playing' | 'scoring';
+  phase: 'bidding' | 'choosing-trump' | 'discarding' | 'playing' | 'scoring';
   dealer: string;
   forcedBid: boolean;
 }
@@ -103,6 +103,10 @@ export function isTrumpCard(card: GameCard, trumpSuit: Suit | null): boolean {
   return card.suit === 'joker' || card.suit === trumpSuit || isOffJack(card, trumpSuit);
 }
 
+export function effectiveSuit(card: GameCard, trumpSuit: Suit | null): Suit {
+  return trumpSuit && isTrumpCard(card, trumpSuit) ? trumpSuit : card.suit;
+}
+
 export function getCardValue(card: GameCard, trumpSuit: Suit | null): number {
   const baseRankValues: Record<Rank, number> = {
     '2': 1,
@@ -150,11 +154,10 @@ export function canPlayCard(
 ): boolean {
   if (trickCards.length === 0 || !leadSuit) return true;
 
-  const effectiveSuit = (c: GameCard) => isTrumpCard(c, trumpSuit) ? trumpSuit : c.suit;
-  const hasLeadSuit = playerHand.some(c => effectiveSuit(c) === leadSuit);
+  const hasLeadSuit = playerHand.some(c => effectiveSuit(c, trumpSuit) === leadSuit);
 
   if (!hasLeadSuit) return true;
-  return effectiveSuit(card) === leadSuit;
+  return effectiveSuit(card, trumpSuit) === leadSuit;
 }
 
 export function determineTrickWinner(

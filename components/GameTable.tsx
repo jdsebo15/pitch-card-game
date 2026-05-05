@@ -1,23 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, SafeAreaView } from 'react-native';
 import { Card } from './Card';
 import { GameCard, sortCards, Suit } from '../lib/game';
 
-const { width, height } = Dimensions.get('window');
+const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
-// Card dimensions
-const CARD_W = 56;
-const CARD_H = 80;
-const SIDE_CARD_W = 44;
-const SIDE_CARD_H = 62;
-const CENTER_CARD_W = 70;
-const CENTER_CARD_H = 98;
+function useCardSizes() {
+  const { width, height } = useWindowDimensions();
+  const base = Math.min(width, height);
+  const CARD_W = clamp(Math.round(base * 0.13), 44, 72);
+  const CARD_H = Math.round(CARD_W * 1.4);
+  const SIDE_CARD_W = Math.round(CARD_W * 0.78);
+  const SIDE_CARD_H = Math.round(CARD_H * 0.78);
+  const CENTER_CARD_W = Math.round(CARD_W * 1.25);
+  const CENTER_CARD_H = Math.round(CARD_H * 1.25);
+  return { CARD_W, CARD_H, SIDE_CARD_W, SIDE_CARD_H, CENTER_CARD_W, CENTER_CARD_H };
+}
 
 interface PlayerPosition {
   id: string;
   name: string;
   handCount: number;
   isCurrent: boolean;
+  isHuman: boolean;
   position: 'top' | 'right' | 'bottom' | 'left';
   score: number;
   team: number;
@@ -32,18 +37,27 @@ interface GameTableProps {
   trumpSuit?: 'hearts' | 'diamonds' | 'clubs' | 'spades' | 'joker' | null;
   currentBid?: number | null;
   teamScores?: Record<number, number>;
+  thinking?: boolean;
 }
 
 function PlayerBadge({
   player,
   align = 'center',
+  thinking = false,
 }: {
   player: PlayerPosition;
   align?: 'center' | 'flex-start' | 'flex-end';
+  thinking?: boolean;
 }) {
   const teamColor = player.team === 0 ? '#10b981' : '#3b82f6';
   return (
-    <View style={[badgeStyles.badge, player.isCurrent && badgeStyles.active, { alignItems: align, borderColor: player.isCurrent ? '#6366f1' : teamColor }]}>
+    <View
+      style={[
+        badgeStyles.badge,
+        player.isCurrent && badgeStyles.active,
+        { alignItems: align, borderColor: player.isCurrent ? '#6366f1' : teamColor },
+      ]}
+    >
       <View style={badgeStyles.nameRow}>
         <Text style={badgeStyles.name}>
           {player.name}
@@ -55,41 +69,58 @@ function PlayerBadge({
           </View>
         )}
       </View>
-      <Text style={[badgeStyles.sub, { color: teamColor }]}>
-        {player.score} pts
-      </Text>
+      <Text style={[badgeStyles.sub, { color: teamColor }]}>{player.score} pts</Text>
+      {thinking && <Text style={badgeStyles.thinking}>thinking…</Text>}
     </View>
   );
 }
 
-/** Fanned face‑up cards for North/top — horizontal fan */
-function HorizontalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?: Suit | null }) {
+function HorizontalFanFaceUp({
+  cards,
+  trumpSuit,
+  cardW,
+  cardH,
+}: {
+  cards: GameCard[];
+  trumpSuit?: Suit | null;
+  cardW: number;
+  cardH: number;
+}) {
   const sorted = sortCards(cards, trumpSuit || null);
   const show = Math.min(sorted.length, 9);
-  const overlap = 18;
-  const totalW = CARD_W + (show - 1) * (CARD_W - overlap);
+  const overlap = Math.round(cardW * 0.32);
+  const totalW = show > 0 ? cardW + (show - 1) * (cardW - overlap) : 0;
   return (
-    <View style={{ width: totalW, height: CARD_H, position: 'relative' }}>
+    <View style={{ width: totalW, height: cardH, position: 'relative' }}>
       {sorted.slice(0, show).map((card, i) => (
-        <View key={i} style={{ position: 'absolute', left: i * (CARD_W - overlap) }}>
-          <Card suit={card.suit} rank={card.rank} faceUp={true} width={CARD_W} height={CARD_H} />
+        <View key={i} style={{ position: 'absolute', left: i * (cardW - overlap) }}>
+          <Card suit={card.suit} rank={card.rank} faceUp={true} width={cardW} height={cardH} />
         </View>
       ))}
     </View>
   );
 }
 
-/** Fanned face‑up cards for West/left — vertical fan */
-function VerticalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?: Suit | null }) {
+function VerticalFanFaceUp({
+  cards,
+  trumpSuit,
+  cardW,
+  cardH,
+}: {
+  cards: GameCard[];
+  trumpSuit?: Suit | null;
+  cardW: number;
+  cardH: number;
+}) {
   const sorted = sortCards(cards, trumpSuit || null);
   const show = Math.min(sorted.length, 8);
-  const overlap = 12; // Reduced from 16 for more spacing
-  const totalH = SIDE_CARD_H + (show - 1) * (SIDE_CARD_H - overlap);
+  const overlap = Math.round(cardH * 0.2);
+  const totalH = show > 0 ? cardH + (show - 1) * (cardH - overlap) : 0;
   return (
-    <View style={{ width: SIDE_CARD_W, height: totalH, position: 'relative' }}>
+    <View style={{ width: cardW, height: totalH, position: 'relative' }}>
       {sorted.slice(0, show).map((card, i) => (
-        <View key={i} style={{ position: 'absolute', top: i * (SIDE_CARD_H - overlap) }}>
-          <Card suit={card.suit} rank={card.rank} faceUp={true} width={SIDE_CARD_W} height={SIDE_CARD_H} />
+        <View key={i} style={{ position: 'absolute', top: i * (cardH - overlap) }}>
+          <Card suit={card.suit} rank={card.rank} faceUp={true} width={cardW} height={cardH} />
         </View>
       ))}
     </View>
@@ -97,12 +128,18 @@ function VerticalFanFaceUp({ cards, trumpSuit }: { cards: GameCard[], trumpSuit?
 }
 
 function TrumpBadge({ trumpSuit }: { trumpSuit: string }) {
-  const suitSymbol = trumpSuit === 'hearts' ? '♥' : trumpSuit === 'diamonds' ? '♦' : trumpSuit === 'clubs' ? '♣' : trumpSuit === 'spades' ? '♠' : '🃏';
-  const color = trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' : trumpSuit === 'joker' ? '#7c3aed' : '#000';
+  const symbol =
+    trumpSuit === 'hearts'   ? '♥' :
+    trumpSuit === 'diamonds' ? '♦' :
+    trumpSuit === 'clubs'    ? '♣' :
+    trumpSuit === 'spades'   ? '♠' : '🃏';
+  const color =
+    trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#dc2626' :
+    trumpSuit === 'joker' ? '#7c3aed' : '#000';
   return (
     <View style={infoStyles.trumpBadge}>
       <Text style={infoStyles.trumpLabel}>TRUMP</Text>
-      <Text style={[infoStyles.trumpSymbol, { color }]}>{suitSymbol}</Text>
+      <Text style={[infoStyles.trumpSymbol, { color }]}>{symbol}</Text>
     </View>
   );
 }
@@ -114,32 +151,34 @@ export function GameTable({
   trumpSuit,
   currentBid,
   teamScores = { 0: 0, 1: 0 },
+  thinking = false,
 }: GameTableProps) {
+  const sizes = useCardSizes();
+
   const north = players.find(p => p.position === 'top');
   const south = players.find(p => p.position === 'bottom');
-  const west = players.find(p => p.position === 'left');
-  const east = players.find(p => p.position === 'right');
+  const west  = players.find(p => p.position === 'left');
+  const east  = players.find(p => p.position === 'right');
 
-  // Center trick cards — position relative to which player played
+  const offset = sizes.CENTER_CARD_W * 0.6;
   const getCardOffset = (playerId: string): { dx: number; dy: number } => {
     const p = players.find(pl => pl.id === playerId);
     if (!p) return { dx: 0, dy: 0 };
     switch (p.position) {
-      case 'top': return { dx: 0, dy: -45 };
-      case 'bottom': return { dx: 0, dy: 45 };
-      case 'left': return { dx: -55, dy: 0 };
-      case 'right': return { dx: 55, dy: 0 };
+      case 'top':    return { dx: 0,        dy: -offset };
+      case 'bottom': return { dx: 0,        dy:  offset };
+      case 'left':   return { dx: -offset,  dy: 0 };
+      case 'right':  return { dx:  offset,  dy: 0 };
     }
   };
 
+  const isThinking = (player: PlayerPosition | undefined) =>
+    !!player && player.isCurrent && !player.isHuman && thinking;
+
   return (
     <SafeAreaView style={styles.root}>
-      {/* ── Green felt table ── */}
       <View style={styles.felt}>
-
-        {/* ── Compact score/trump/bid overlay (top-left) ── */}
         <View style={infoStyles.compactOverlay}>
-          {/* Left column: NS/EW scores stacked */}
           <View style={infoStyles.scoreColumn}>
             <View style={[infoStyles.teamChip, { borderColor: '#10b981' }]}>
               <Text style={[infoStyles.teamLabel, { color: '#10b981' }]}>NS</Text>
@@ -150,7 +189,6 @@ export function GameTable({
               <Text style={infoStyles.teamScore}>{teamScores[1]}</Text>
             </View>
           </View>
-          {/* Right column: Trump + Bid */}
           <View style={infoStyles.infoColumn}>
             {trumpSuit && <TrumpBadge trumpSuit={trumpSuit} />}
             {currentBid != null && (
@@ -161,33 +199,44 @@ export function GameTable({
           </View>
         </View>
 
-        {/* ── NORTH ── */}
         {north && (
           <View style={styles.northArea}>
-            <PlayerBadge player={north} />
+            <PlayerBadge player={north} thinking={isThinking(north)} />
             <View style={{ marginTop: 8 }}>
-              <HorizontalFanFaceUp cards={playerHands[north.id] || []} trumpSuit={trumpSuit} />
+              <HorizontalFanFaceUp
+                cards={playerHands[north.id] || []}
+                trumpSuit={trumpSuit}
+                cardW={sizes.CARD_W}
+                cardH={sizes.CARD_H}
+              />
             </View>
           </View>
         )}
 
-        {/* ── WEST ── */}
         {west && (
           <View style={styles.westArea}>
-            <VerticalFanFaceUp cards={playerHands[west.id] || []} trumpSuit={trumpSuit} />
-            <PlayerBadge player={west} align="flex-start" />
+            <VerticalFanFaceUp
+              cards={playerHands[west.id] || []}
+              trumpSuit={trumpSuit}
+              cardW={sizes.SIDE_CARD_W}
+              cardH={sizes.SIDE_CARD_H}
+            />
+            <PlayerBadge player={west} align="flex-start" thinking={isThinking(west)} />
           </View>
         )}
 
-        {/* ── EAST ── */}
         {east && (
           <View style={styles.eastArea}>
-            <VerticalFanFaceUp cards={playerHands[east.id] || []} trumpSuit={trumpSuit} />
-            <PlayerBadge player={east} align="flex-end" />
+            <VerticalFanFaceUp
+              cards={playerHands[east.id] || []}
+              trumpSuit={trumpSuit}
+              cardW={sizes.SIDE_CARD_W}
+              cardH={sizes.SIDE_CARD_H}
+            />
+            <PlayerBadge player={east} align="flex-end" thinking={isThinking(east)} />
           </View>
         )}
 
-        {/* ── CENTER TRICK AREA ── */}
         <View style={styles.centerArea}>
           {centerCards.length === 0 ? (
             <View style={styles.emptyCenter}>
@@ -207,27 +256,29 @@ export function GameTable({
                   ]}
                 >
                   <View style={[styles.centerCardBorder, { borderColor: teamColor }]}>
-                    <Card suit={card.suit} rank={card.rank} width={CENTER_CARD_W} height={CENTER_CARD_H} />
+                    <Card
+                      suit={card.suit}
+                      rank={card.rank}
+                      width={sizes.CENTER_CARD_W}
+                      height={sizes.CENTER_CARD_H}
+                    />
                   </View>
                 </View>
               );
             })
           )}
         </View>
+      </View>
 
-      </View>{/* end felt */}
-
-      {/* ── SOUTH badge (pinned to bottom of felt) ── */}
       {south && (
         <View style={styles.southArea}>
-          <PlayerBadge player={south} />
+          <PlayerBadge player={south} thinking={isThinking(south)} />
         </View>
       )}
     </SafeAreaView>
   );
 }
 
-/* ─── styles ─── */
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -235,19 +286,16 @@ const styles = StyleSheet.create({
   },
   felt: {
     flex: 1,
-    backgroundColor: '#166534',   // deep green felt
+    backgroundColor: '#166534',
     margin: 8,
     borderRadius: 24,
     borderWidth: 6,
-    borderColor: '#854d0e',        // wooden rail
-    // relative anchor for absolute children
+    borderColor: '#854d0e',
     position: 'relative',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* ── player areas ── */
   northArea: {
     position: 'absolute',
     top: 12,
@@ -257,14 +305,14 @@ const styles = StyleSheet.create({
   westArea: {
     position: 'absolute',
     left: 8,
-    top: '30%',
+    top: '28%',
     alignItems: 'center',
     gap: 8,
   },
   eastArea: {
     position: 'absolute',
     right: 8,
-    top: '30%',
+    top: '28%',
     alignItems: 'center',
     gap: 8,
   },
@@ -274,19 +322,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
   },
-
-  /* ── center ── */
   centerArea: {
-    width: 220,
-    height: 220,
+    width: 240,
+    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   emptyCenter: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.15)',
     borderStyle: 'dashed',
@@ -311,7 +357,6 @@ const styles = StyleSheet.create({
   },
 });
 
-/* ─── player badge styles ─── */
 const badgeStyles = StyleSheet.create({
   badge: {
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -357,9 +402,15 @@ const badgeStyles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
   },
+  thinking: {
+    color: '#fde68a',
+    fontSize: 10,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 1,
+  },
 });
 
-/* ─── score / trump info styles ─── */
 const infoStyles = StyleSheet.create({
   compactOverlay: {
     position: 'absolute',
@@ -373,19 +424,15 @@ const infoStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
-    maxWidth: 160,
-    height: 72, // 28 + 2 + 28 + 8 + 8 (padding)
+    maxWidth: 170,
+    height: 72,
   },
-  scoreColumn: {
-    gap: 2,
-  },
-  infoColumn: {
-    gap: 2,
-  },
+  scoreColumn: { gap: 2 },
+  infoColumn: { gap: 2 },
   teamChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
     backgroundColor: 'rgba(0,0,0,0.6)',
     paddingHorizontal: 6,
     paddingVertical: 4,
